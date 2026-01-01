@@ -1,6 +1,7 @@
 # Booking Forms Documentation
 
 ## 1. Overview
+
 The booking forms module provides form classes for room availability filtering and booking operations. These forms handle date-based room searching and booking submission with conflict validation.
 
 **Purpose:** Validate and process user input for booking-related operations.
@@ -8,6 +9,7 @@ The booking forms module provides form classes for room availability filtering a
 **Responsibility:** Handle form validation, availability checking, and booking conflict detection at the form level.
 
 ## 2. File Location
+
 - **Source path:** `booking/forms.py`
 
 ## 3. Key Components
@@ -19,6 +21,7 @@ The booking forms module provides form classes for room availability filtering a
 **Model:** Booking
 
 **Meta Configuration:**
+
 ```python
 model = Booking
 fields = ['room', 'check_in', 'check_out', 'special_requests', 'rating', 'review']
@@ -27,33 +30,39 @@ fields = ['room', 'check_in', 'check_out', 'special_requests', 'rating', 'review
 #### Fields
 
 **`room`** (ModelChoiceField)
+
 - **Source:** Booking.room ForeignKey
 - **Queryset:** All Room objects
 - **Required:** True
 
 **`check_in`** (DateTimeField)
+
 - **Source:** Booking.check_in field
 - **Widget:** HTML5 date input
 - **Attribute:** `type="date"`
 - **Required:** True
 
 **`check_out`** (DateTimeField)
+
 - **Source:** Booking.check_out field
 - **Widget:** HTML5 date input
 - **Attribute:** `type="date"`
 - **Required:** True
 
 **`special_requests`** (CharField)
+
 - **Source:** Booking.special_requests field
 - **Widget:** Textarea (3 rows)
 - **Required:** False
 
 **`rating`** (IntegerField)
+
 - **Source:** Booking.rating field
 - **Required:** False
 - **Range:** Typically 1-5
 
 **`review`** (CharField)
+
 - **Source:** Booking.review field
 - **Widget:** Textarea (3 rows)
 - **Required:** False
@@ -61,6 +70,7 @@ fields = ['room', 'check_in', 'check_out', 'special_requests', 'rating', 'review
 #### Custom Methods
 
 **`clean()`**
+
 - **Purpose:** Validate booking dates and check for room conflicts
 - **Validation Steps:**
   1. Call parent clean() to validate individual fields
@@ -75,13 +85,14 @@ fields = ['room', 'check_in', 'check_out', 'special_requests', 'rating', 'review
      - Message: "This room is already booked for the selected dates."
 
 **Logic:**
+
 ```python
 def clean(self):
     cleaned_data = super().clean()
     room = cleaned_data.get("room")
     check_in = cleaned_data.get("check_in")
     check_out = cleaned_data.get("check_out")
-    
+
     if room and check_in and check_out:
         # Find overlapping bookings
         conflicts = Booking.objects.filter(
@@ -105,11 +116,13 @@ def clean(self):
 #### Fields
 
 **`check_in`** (DateTimeField)
+
 - **Widget:** DateInput(type="date")
 - **Required:** True
 - **Label:** "Check-in Date"
 
 **`check_out`** (DateTimeField)
+
 - **Widget:** DateInput(type="date")
 - **Required:** True
 - **Label:** "Check-out Date"
@@ -123,6 +136,7 @@ No custom validation in clean() method. Validation delegated to views.
 ## 4. Execution Flow
 
 **PrivateBookingForm Submission Flow:**
+
 ```
 1. Form initialized with POST data
 2. Form.is_valid() called
@@ -136,6 +150,7 @@ No custom validation in clean() method. Validation delegated to views.
 ```
 
 **Conflict Detection Logic:**
+
 ```
 User selects room with:
   check_in = 2024-03-15 15:00
@@ -157,7 +172,9 @@ Example overlaps caught:
 ## 5. Data Flow
 
 ### Inputs
+
 **PrivateBookingForm:**
+
 - room (integer ID)
 - check_in (date string)
 - check_out (date string)
@@ -166,21 +183,25 @@ Example overlaps caught:
 - review (text, optional)
 
 **AvailabilityForm:**
+
 - check_in (date string)
 - check_out (date string)
 
 ### Processing
+
 - **Field Validation:** Django's default field validators
 - **Type Conversion:** String dates converted to datetime objects
 - **Conflict Detection:** Database query for overlapping bookings
 - **Error Collection:** Validation errors accumulated in form.errors dict
 
 ### Outputs
+
 - Validated form data in cleaned_data dict
 - Error messages for invalid fields
 - ValidationError preventing save if conflicts detected
 
 ### Dependencies
+
 - Booking model
 - Room model
 - Django forms module
@@ -189,6 +210,7 @@ Example overlaps caught:
 ## 6. Mermaid Diagrams
 
 **Form Validation Flow:**
+
 ```mermaid
 flowchart TD
     A["Form.is_valid()"] --> B["Field Validation"]
@@ -206,22 +228,23 @@ flowchart TD
 ```
 
 **Booking Overlap Detection Visualization:**
+
 ```mermaid
 graph TB
-    A["New Booking Timeline"] 
+    A["New Booking Timeline"]
     A -->|Check-in| B["2024-03-15 15:00"]
     B -->|Check-out| C["2024-03-18 11:00"]
-    
-    D["Existing Booking 1"] 
+
+    D["Existing Booking 1"]
     D -->|Start| E["2024-03-14 10:00"]
     E -->|End| F["2024-03-16 11:00"]
     F -->|Conflict?| G["✓ YES - Overlaps"]
-    
+
     H["Existing Booking 2"]
     H -->|Start| I["2024-03-10 10:00"]
     I -->|End| J["2024-03-15 15:00"]
     J -->|Conflict?| K["✗ NO - Touches but no overlap"]
-    
+
     L["Existing Booking 3"]
     L -->|Start| M["2024-03-18 11:00"]
     M -->|End| N["2024-03-20 10:00"]
@@ -231,6 +254,7 @@ graph TB
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid date format:** Django DateInput handles parsing, shows validation error
 - **check_out before check_in:** Not validated by form (handled in views)
 - **Room not found:** ModelChoiceField shows "Select a valid choice" error
@@ -238,6 +262,7 @@ graph TB
 - **Database error on conflict query:** Exception propagates, unhandled
 
 ### Edge Cases
+
 - **Same-day booking:** Valid (date-based, not time-based)
 - **Null date fields:** Required=True prevents, shows validation error
 - **Identical to existing booking:** clean() catches as conflict
@@ -249,6 +274,7 @@ graph TB
 ## 8. Example Usage
 
 ### Using PrivateBookingForm
+
 ```python
 from booking.forms import PrivateBookingForm
 
@@ -271,30 +297,32 @@ else:
 ```
 
 ### Template Rendering
+
 ```django
 {% load static %}
 
 <form method="POST">
     {% csrf_token %}
-    
+
     {{ form.room }}
     {{ form.check_in }}
     {{ form.check_out }}
     {{ form.special_requests }}
     {{ form.rating }}
     {{ form.review }}
-    
+
     {% if form.non_field_errors %}
         <div class="error">
             {{ form.non_field_errors }}
         </div>
     {% endif %}
-    
+
     <button type="submit">Book Room</button>
 </form>
 ```
 
 ### Using AvailabilityForm
+
 ```python
 from booking.forms import AvailabilityForm
 
@@ -303,15 +331,16 @@ form = AvailabilityForm(request.POST or None)
 if form.is_valid():
     check_in = form.cleaned_data['check_in']
     check_out = form.cleaned_data['check_out']
-    
+
     # View handles filtering rooms
     available_rooms = filter_available_rooms(
-        check_in, 
+        check_in,
         check_out
     )
 ```
 
 ### Error Handling Example
+
 ```python
 form = PrivateBookingForm(request.POST)
 
@@ -321,7 +350,7 @@ else:
     # Access specific errors
     if 'room' in form.errors:
         print(form.errors['room'])  # ['This field is required.']
-    
+
     if '__all__' in form.errors:
         print(form.errors['__all__'])  # Conflict error
 ```

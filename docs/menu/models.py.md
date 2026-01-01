@@ -1,6 +1,7 @@
 # Menu Models Documentation
 
 ## 1. Overview
+
 The menu module manages the hotel's food service catalog including menu items, categories, ratings, and guest food orders. It enables guests to browse, rate menu items, and place food orders during their stay.
 
 **Purpose:** Define data structures for restaurant menu management and food ordering system.
@@ -8,6 +9,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 **Responsibility:** Store menu items, categories, user ratings, and food orders with associated metadata.
 
 ## 2. File Location
+
 - **Source path:** `menu/models.py`
 
 ## 3. Key Components
@@ -17,13 +19,16 @@ The menu module manages the hotel's food service catalog including menu items, c
 **Purpose:** Organize menu items into logical groupings
 
 #### Fields
+
 - **`name`** (CharField) - Max 50, category identifier (e.g., "Appetizers", "Main Courses")
 - **`description`** (TextField) - Optional category description
 
 #### Methods
+
 **`__str__()`** - Returns category name
 
 #### Relationships
+
 - Has many MenuItem objects via related_name='items'
 
 ---
@@ -33,6 +38,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 **Purpose:** Represent individual food items on the menu with pricing and metadata
 
 #### Fields
+
 - **`name`** (CharField) - Max 100, dish name
 - **`category`** (ForeignKey) - Links to Category, null allowed, cascade delete, related_name='items'
 - **`description`** (TextField) - Optional dish description
@@ -45,6 +51,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 #### Methods
 
 **`average_rating()`**
+
 - **Purpose:** Calculate average rating for menu item
 - **Returns:** Decimal number rounded to 1 decimal place (e.g., 4.3)
 - **Logic:**
@@ -57,6 +64,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 **`__str__()`** - Returns item name
 
 #### Relationships
+
 - Has many Rating objects via related_name='ratings'
 - Belongs to one Category (optional)
 
@@ -67,14 +75,17 @@ The menu module manages the hotel's food service catalog including menu items, c
 **Purpose:** Store user ratings for menu items
 
 #### Fields
+
 - **`menu_item`** (ForeignKey) - Links to MenuItem, cascade delete, related_name='ratings'
 - **`user`** (ForeignKey) - Links to User, cascade delete
 - **`value`** (PositiveSmallIntegerField) - Rating value (typically 1-5)
 
 #### Methods
+
 **`__str__()`** - Returns format: "{username} rated {menu_item} → {value}"
 
 #### Relationships
+
 - Belongs to one MenuItem
 - Belongs to one User
 - Combined: Prevents duplicate ratings for same user/item pair (though not enforced at model level)
@@ -86,6 +97,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 **Purpose:** Track food orders placed by guests during their stay
 
 #### Fields
+
 - **`user`** (ForeignKey) - Links to User (guest), cascade delete
 - **`booking`** (ForeignKey) - Links to Booking (room reservation), cascade delete
 - **`item`** (ForeignKey) - Links to MenuItem ordered, cascade delete
@@ -94,9 +106,11 @@ The menu module manages the hotel's food service catalog including menu items, c
 - **`status`** (CharField) - Default: "pending" (pending, preparing, delivered)
 
 #### Methods
+
 **`__str__()`** - Returns format: "{username} ordered {item_name}"
 
 #### Relationships
+
 - Belongs to one User (guest)
 - Belongs to one Booking (associated room reservation)
 - Belongs to one MenuItem
@@ -108,6 +122,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 ## 4. Execution Flow
 
 **Menu Item Display Flow:**
+
 ```
 1. User navigates to menu page
 2. View queries all MenuItem objects
@@ -117,6 +132,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 ```
 
 **Order Placement Flow:**
+
 ```
 1. User selects menu item and quantity
 2. Check if user has active booking with status="checked_in"
@@ -131,6 +147,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 ```
 
 **Rating Submission Flow:**
+
 ```
 1. User views menu item detail
 2. User submits rating (1-5 stars)
@@ -145,28 +162,35 @@ The menu module manages the hotel's food service catalog including menu items, c
 ## 5. Data Flow
 
 ### Inputs
+
 **MenuItem Creation:**
+
 - name, description, price, estimated_time, loyalty_points
 - image (file) or image_url
 
 **Order Creation:**
+
 - user_id, booking_id, item_id, quantity
 
 **Rating Submission:**
+
 - menu_item_id, user_id, value (1-5)
 
 ### Processing
+
 - **Aggregation:** Average rating calculated on-demand per item
 - **Status Tracking:** Orders tracked through preparation states
 - **Relationships:** Foreign keys maintain data integrity
 - **Cascading:** Deleting category/item deletes related orders/ratings
 
 ### Outputs
+
 - MenuItem records with average ratings
 - Order records linked to bookings and users
 - Rating records associated with users and items
 
 ### Dependencies
+
 - Django ORM models
 - Category → MenuItem hierarchy
 - User → Rating relationship for tracking user preferences
@@ -175,6 +199,7 @@ The menu module manages the hotel's food service catalog including menu items, c
 ## 6. Mermaid Diagrams
 
 **Entity Relationship Diagram:**
+
 ```mermaid
 erDiagram
     CATEGORY ||--o{ MENUITEM : contains
@@ -183,13 +208,13 @@ erDiagram
     USER ||--o{ RATING : gives
     USER ||--o{ ORDER : places
     BOOKING ||--o{ ORDER : contains
-    
+
     CATEGORY {
         int id PK
         string name
         text description
     }
-    
+
     MENUITEM {
         int id PK
         int category_id FK
@@ -201,14 +226,14 @@ erDiagram
         string image
         string image_url
     }
-    
+
     RATING {
         int id PK
         int menu_item_id FK
         int user_id FK
         int value
     }
-    
+
     ORDER {
         int id PK
         int user_id FK
@@ -221,6 +246,7 @@ erDiagram
 ```
 
 **Rating Aggregation Flow:**
+
 ```mermaid
 flowchart TD
     A["MenuItem.average_rating()"] --> B["Query all Ratings<br/>for this item"]
@@ -235,6 +261,7 @@ flowchart TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **No category for item:** Allowed (category can be null)
 - **Price validation:** DecimalField auto-validates precision
 - **Duplicate rating:** Model doesn't prevent (view should handle)
@@ -242,6 +269,7 @@ flowchart TD
 - **Negative quantity:** PositiveIntegerField prevents at model level
 
 ### Edge Cases
+
 - **Zero ratings:** average_rating() returns 0 gracefully
 - **Item without image:** Can use image_url instead
 - **No average_rating yet:** Returns 0 before first rating
@@ -253,6 +281,7 @@ flowchart TD
 ## 8. Example Usage
 
 ### Creating Menu Structure
+
 ```python
 from menu.models import Category, MenuItem
 
@@ -279,6 +308,7 @@ calamari_rating = calamari.average_rating()  # Returns: 4.5
 ```
 
 ### Placing an Order
+
 ```python
 from menu.models import Order, MenuItem
 from booking.models import Booking
@@ -299,6 +329,7 @@ print(str(order))  # "john_doe ordered Fried Calamari"
 ```
 
 ### Submitting a Rating
+
 ```python
 from menu.models import Rating, MenuItem
 
@@ -316,6 +347,7 @@ avg = item.average_rating()  # Updates with new rating
 ```
 
 ### Querying Orders by Status
+
 ```python
 from menu.models import Order
 
@@ -333,6 +365,7 @@ pending.update(status="delivering")
 ```
 
 ### Getting Menu Items with Ratings
+
 ```python
 from menu.models import MenuItem
 

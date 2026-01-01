@@ -1,6 +1,7 @@
 # Menu URLs Configuration Documentation
 
 ## 1. Overview
+
 The menu URL configuration defines routing endpoints for food menu browsing and order placement. It maps user requests to menu-related view functions for both public menu display and private guest ordering.
 
 **Purpose:** Route menu and order-related requests to appropriate view functions.
@@ -8,6 +9,7 @@ The menu URL configuration defines routing endpoints for food menu browsing and 
 **Responsibility:** Connect URL patterns to menu views for guest food ordering functionality.
 
 ## 2. File Location
+
 - **Source path:** `menu/urls.py`
 
 ## 3. Key Components
@@ -15,6 +17,7 @@ The menu URL configuration defines routing endpoints for food menu browsing and 
 ### URL Patterns
 
 #### Private Menu Access
+
 ```
 Path: menu/private-menu/
 View: private_menu
@@ -26,6 +29,7 @@ Template: customer/private_menu.html
 ```
 
 #### Place Order
+
 ```
 Path: menu/place-order/
 View: place_order
@@ -39,6 +43,7 @@ Response: Redirect with message
 ## 4. Execution Flow
 
 **URL Resolution:**
+
 ```
 1. Request arrives at /menu/private-menu/ or /menu/place-order/
 2. Django URL router matches against urlpatterns
@@ -48,11 +53,13 @@ Response: Redirect with message
 ```
 
 **Request Flow for Private Menu:**
+
 ```
 Browser → /menu/private-menu/ → URL Router → private_menu view → Check auth → Query bookings → Render template → HTML response
 ```
 
 **Request Flow for Order Placement:**
+
 ```
 Form Submit → POST /menu/place-order/ → URL Router → place_order view → Check auth → Verify booking → Create Order → Redirect with message
 ```
@@ -60,22 +67,26 @@ Form Submit → POST /menu/place-order/ → URL Router → place_order view → 
 ## 5. Data Flow
 
 ### Inputs
+
 - URL path patterns
 - HTTP method (GET for private_menu, POST for place_order)
 - Request parameters from forms
 
 ### Processing
+
 - URL pattern matching
 - View function selection
 - Decorator execution (login_required)
 - View logic execution
 
 ### Outputs
+
 - HTTP response from view
 - Template rendering or redirect
 - Messages displayed to user
 
 ### Dependencies
+
 - Django URL routing system
 - menu.views module functions
 - Authentication system (login_required)
@@ -83,15 +94,16 @@ Form Submit → POST /menu/place-order/ → URL Router → place_order view → 
 ## 6. Mermaid Diagrams
 
 **URL Routing:**
+
 ```mermaid
 graph TD
     A["HTTP Request"] -->|GET /menu/private-menu/| B["private_menu"]
     A -->|POST /menu/place-order/| C["place_order"]
-    
+
     B -->|Check Auth| D["Query Bookings"]
     D -->|Has Check-in| E["Render Menu"]
     D -->|No Check-in| F["Redirect Home"]
-    
+
     C -->|Check Auth| G["Verify Booking"]
     G -->|Found| H["Create Order"]
     G -->|Not Found| I["Error Message"]
@@ -102,11 +114,13 @@ graph TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid URL:** Django returns 404 Not Found
 - **Missing view function:** ImportError at startup
 - **User not authenticated:** Decorator redirects to login
 
 ### Edge Cases
+
 - **URL name conflicts:** Last definition wins
 - **Special characters in URL:** Must be properly encoded
 - **Case sensitivity:** URL paths are case-sensitive
@@ -114,6 +128,7 @@ graph TD
 ## 8. Example Usage
 
 ### Reverse URL Lookup
+
 ```python
 from django.urls import reverse
 
@@ -122,6 +137,7 @@ url = reverse('place_order')   # /menu/place-order/
 ```
 
 ### Template Links
+
 ```django
 <!-- Menu link -->
 <a href="{% url 'private_menu' %}">View Menu</a>
@@ -136,6 +152,7 @@ url = reverse('place_order')   # /menu/place-order/
 ```
 
 ### URL Inclusion in Main Project
+
 ```python
 # hotelgrand/urls.py
 from django.urls import path, include

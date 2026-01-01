@@ -1,6 +1,7 @@
 # Accounts Forms Documentation
 
 ## 1. Overview
+
 The accounts forms module defines custom forms for user profile management. The `ProfileEditForm` extends Django's ModelForm to provide comprehensive profile editing functionality with username, password, and image upload support.
 
 **Purpose:** Handle form validation and rendering for profile editing operations.
@@ -8,6 +9,7 @@ The accounts forms module defines custom forms for user profile management. The 
 **Responsibility:** Validate profile data and coordinate updates to both User and UserProfile models.
 
 ## 2. File Location
+
 - **Source path:** `accounts/forms.py`
 
 ## 3. Key Components
@@ -21,22 +23,26 @@ The accounts forms module defines custom forms for user profile management. The 
 #### Fields
 
 **`username`** (CharField)
+
 - Max length: 150
 - Purpose: Edit the associated User's username
 - Not part of UserProfile but bound via custom save()
 
 **`password`** (CharField)
+
 - Widget: PasswordInput (masked input)
 - Required: False (optional field)
 - Purpose: Allow users to change password during profile edit
 - Not part of UserProfile but bound via custom save()
 
 **`profile_image`** (ImageField)
+
 - Required: False
 - Purpose: Allow image upload
 - From UserProfile model
 
 #### Meta Configuration
+
 ```python
 model = UserProfile
 fields = ['profile_image']  # Only UserProfile field included
@@ -45,8 +51,9 @@ fields = ['profile_image']  # Only UserProfile field included
 #### Custom Methods
 
 **`save(commit=True)`**
+
 - **Purpose:** Handle saving both User and UserProfile models atomically
-- **Parameters:** 
+- **Parameters:**
   - `commit` (bool): Whether to commit changes to database
 - **Process:**
   1. Save form without committing (commit=False)
@@ -61,6 +68,7 @@ fields = ['profile_image']  # Only UserProfile field included
 ## 4. Execution Flow
 
 **Form Submission & Save Flow:**
+
 ```
 1. User submits profile edit form
 2. Form.__init__() called with POST/FILES data
@@ -76,6 +84,7 @@ fields = ['profile_image']  # Only UserProfile field included
 ```
 
 **Password Handling:**
+
 ```
 Form submission → Check if password provided → If truthy, hash via set_password() → Save User
 ```
@@ -83,18 +92,22 @@ Form submission → Check if password provided → If truthy, hash via set_passw
 ## 5. Data Flow
 
 ### Inputs
+
 - Form data from POST request:
   - `username`: String for User.username
   - `password`: String for User password (optional)
   - `profile_image`: Image file (optional)
 
 ### Processing
+
 - **Validation:**
+
   - Username field validates character length
   - Password field is optional (required=False)
   - Image field validates image format
 
 - **Form Operations:**
+
   - Bind form to UserProfile instance
   - Separate User fields (username, password)
   - Separate UserProfile fields (profile_image)
@@ -106,11 +119,13 @@ Form submission → Check if password provided → If truthy, hash via set_passw
   - Atomically save both objects
 
 ### Outputs
+
 - Saved UserProfile with updated profile_image
 - Updated User with new username and/or password
 - Form returns UserProfile instance
 
 ### Dependencies
+
 - Django forms module
 - UserProfile model
 - User model (accessed via profile.user)
@@ -118,18 +133,20 @@ Form submission → Check if password provided → If truthy, hash via set_passw
 ## 6. Mermaid Diagrams
 
 **Form Field Mapping:**
+
 ```mermaid
 graph TD
     A["ProfileEditForm"] -->|Contains| B["username<br/>CharField"]
     A -->|Contains| C["password<br/>PasswordInput"]
     A -->|Contains| D["profile_image<br/>ImageField"]
-    
+
     B -->|Maps to| E["User.username"]
     C -->|Maps to| F["User.password<br/>Hash"]
     D -->|Maps to| G["UserProfile.profile_image"]
 ```
 
 **Save Process Flow:**
+
 ```mermaid
 flowchart TD
     A["Form.save Called"] --> B["super().save<br/>commit=False"]
@@ -148,12 +165,14 @@ flowchart TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid image format:** Django's ImageField validation rejects non-image files
 - **Duplicate username:** Form doesn't validate uniqueness (validation in view)
 - **Password mismatch:** No matching field (handled by view if needed)
 - **File upload too large:** Handled by Django's file upload handler
 
 ### Edge Cases
+
 - **Empty password field:** Skipped (required=False), no password change
 - **Same username:** Allowed (form doesn't validate uniqueness)
 - **Removing profile image:** Can set to None/clear
@@ -163,6 +182,7 @@ flowchart TD
 ## 8. Example Usage
 
 ### Creating and Validating Form
+
 ```python
 from accounts.forms import ProfileEditForm
 from accounts.models import UserProfile
@@ -174,8 +194,8 @@ form = ProfileEditForm(instance=profile)
 
 # Alternative: Create form with POST data
 form = ProfileEditForm(
-    request.POST, 
-    request.FILES, 
+    request.POST,
+    request.FILES,
     instance=profile
 )
 
@@ -185,29 +205,31 @@ if form.is_valid():
 ```
 
 ### Form Rendering in Template
+
 ```django
 {% load static %}
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-    
+
     {{ form.username }}
     {{ form.password }}
     {{ form.profile_image }}
-    
+
     <button type="submit">Save Profile</button>
 </form>
 ```
 
 ### View Usage
+
 ```python
 @login_required
 def edit_profile(request):
     profile = request.user.userprofile
-    
+
     if request.method == 'POST':
         form = ProfileEditForm(
-            request.POST, 
-            request.FILES, 
+            request.POST,
+            request.FILES,
             instance=profile
         )
         if form.is_valid():
@@ -218,11 +240,12 @@ def edit_profile(request):
             initial={'username': request.user.username},
             instance=profile
         )
-    
+
     return render(request, 'edit_profile.html', {'form': form})
 ```
 
 ### Password Change Example
+
 ```python
 # User changes password while editing profile
 form = ProfileEditForm(

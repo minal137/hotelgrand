@@ -1,6 +1,7 @@
 # Django Settings Configuration Documentation
 
 ## 1. Overview
+
 The settings module contains all Django configuration for the Hotel Grand project. It defines installed applications, middleware, database configuration, template settings, and security settings for the development environment.
 
 **Purpose:** Centralize Django configuration and environment-specific settings.
@@ -8,20 +9,25 @@ The settings module contains all Django configuration for the Hotel Grand projec
 **Responsibility:** Configure application components, database connection, templates, security, and middleware behavior.
 
 ## 2. File Location
+
 - **Source path:** `hotelgrand/settings.py`
 
 ## 3. Key Components
 
 ### Project Metadata
+
 **SECRET_KEY:** Django secret key for cryptographic signing
+
 - Value: `'django-insecure-7n80f!if*hc3&g+4bcos5=zaow+zgy@of_#9(d4^zp)nl$2!42'`
 - Status: **INSECURE - For development only, must be changed in production**
 
 **DEBUG:** Debug mode flag
+
 - Value: `True`
 - Status: **Development only - Must be False in production**
 
 **ALLOWED_HOSTS:** List of allowed hostnames
+
 - Value: `[]` (empty)
 - Meaning: In production, must specify allowed domain names
 
@@ -45,6 +51,7 @@ INSTALLED_APPS = [
 ```
 
 **Django Built-in Apps:**
+
 - **admin:** Admin interface at /admin/
 - **auth:** User authentication and permissions
 - **contenttypes:** Content type tracking for models
@@ -53,6 +60,7 @@ INSTALLED_APPS = [
 - **staticfiles:** Static file collection and serving
 
 **Custom Apps:**
+
 - **menu:** Food ordering functionality
 - **core:** Core public views (home, about)
 - **booking:** Room reservation system
@@ -111,6 +119,7 @@ TEMPLATES = [
 ```
 
 **Configuration:**
+
 - **BACKEND:** Uses Django's template engine
 - **DIRS:** Template directory at project root: `BASE_DIR/templates`
 - **APP_DIRS:** Also looks in each app's templates/ folder
@@ -138,6 +147,7 @@ DATABASES = {
 ```
 
 **Database Settings:**
+
 - **ENGINE:** MySQL database backend
 - **NAME:** Database name: `hotelgrand_db`
 - **USER:** MySQL user: `django_user`
@@ -146,6 +156,7 @@ DATABASES = {
 - **PORT:** 3306 (MySQL default)
 
 **Connection Requirements:**
+
 - MySQL server running on localhost
 - `hotelgrand_db` database created
 - User `django_user` with password `secure_password` created
@@ -159,6 +170,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ```
 
 **Calculation:**
+
 - Current file: `hotelgrand/settings.py`
 - .parent: `hotelgrand/`
 - .parent.parent: Project root (where manage.py is)
@@ -178,6 +190,7 @@ Points to WSGI callable in `hotelgrand/wsgi.py` for production server deployment
 ## 4. Execution Flow
 
 **Django Startup Sequence:**
+
 ```
 1. Django loads settings.py
 2. BASE_DIR calculated
@@ -189,6 +202,7 @@ Points to WSGI callable in `hotelgrand/wsgi.py` for production server deployment
 ```
 
 **Request Processing with Middleware:**
+
 ```
 Request → SecurityMiddleware → SessionMiddleware → ... → CsrfMiddleware → AuthMiddleware → View Function
 View Response → MessageMiddleware → CsrfMiddleware → ... → SecurityMiddleware → Browser
@@ -197,23 +211,27 @@ View Response → MessageMiddleware → CsrfMiddleware → ... → SecurityMiddl
 ## 5. Data Flow
 
 ### Inputs
+
 - Django start command: `python manage.py runserver`
 - Environment variables (potential for credentials)
 - Configuration values in settings.py
 
 ### Processing
+
 - Settings validation on startup
 - Middleware loading
 - App initialization
 - Database connection (lazy)
 
 ### Outputs
+
 - Configured Django application
 - Active middleware stack
 - Database connection ready
 - URL patterns loaded
 
 ### Dependencies
+
 - Python pathlib (Path)
 - Django core
 - MySQL backend
@@ -222,6 +240,7 @@ View Response → MessageMiddleware → CsrfMiddleware → ... → SecurityMiddl
 ## 6. Mermaid Diagrams
 
 **Django Request/Response Cycle with Middleware:**
+
 ```mermaid
 graph TD
     A["HTTP Request"] --> B["SecurityMiddleware"]
@@ -246,6 +265,7 @@ graph TD
 ```
 
 **Django Application Architecture:**
+
 ```mermaid
 graph LR
     A["Browser Request"] --> B["WSGI Server"]
@@ -256,10 +276,10 @@ graph LR
     F --> G["Template"]
     G --> H["HTTP Response"]
     H --> A
-    
+
     C --> I["Middleware Stack"]
     I --> E
-    
+
     C --> J["Installed Apps"]
     J -->|Accounts| K["Users"]
     J -->|Booking| L["Rooms"]
@@ -267,6 +287,7 @@ graph LR
 ```
 
 **Configuration Hierarchy:**
+
 ```mermaid
 graph TD
     A["hotelgrand/settings.py"] -->|BASE_DIR| B["Project Root"]
@@ -281,6 +302,7 @@ graph TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Database not running:** OperationalError on first DB query
 - **Database credentials wrong:** MySQL connection refused
 - **Missing templates directory:** TemplateDoesNotExist error
@@ -289,6 +311,7 @@ graph TD
 - **ALLOWED_HOSTS empty:** DisallowedHost exception in production
 
 ### Edge Cases
+
 - **Circular imports between apps:** RuntimeError on startup
 - **Missing installed app:** Model registration fails
 - **Middleware order wrong:** Unexpected behavior (e.g., CSRF before sessions)
@@ -298,6 +321,7 @@ graph TD
 ## 8. Example Usage
 
 ### Adding New Installed App
+
 ```python
 INSTALLED_APPS = [
     # ... existing apps ...
@@ -310,6 +334,7 @@ INSTALLED_APPS = [
 ```
 
 ### Adding Middleware
+
 ```python
 MIDDLEWARE = [
     # ... existing middleware ...
@@ -320,6 +345,7 @@ MIDDLEWARE = [
 ```
 
 ### Changing Database
+
 ```python
 DATABASES = {
     'default': {
@@ -334,6 +360,7 @@ DATABASES = {
 ```
 
 ### Environment-Specific Settings
+
 ```python
 import os
 
@@ -343,6 +370,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 ```
 
 ### Static Files Configuration
+
 ```python
 # Settings addition
 STATIC_URL = '/static/'
@@ -356,6 +384,7 @@ STATICFILES_DIRS = [
 ```
 
 ### Media Files Configuration
+
 ```python
 # Settings addition
 MEDIA_URL = '/media/'

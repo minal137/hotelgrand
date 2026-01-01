@@ -1,6 +1,7 @@
 # Accounts Views Documentation
 
 ## 1. Overview
+
 The accounts views module handles user authentication, registration, and profile management. It provides endpoints for user registration, login, profile editing, and updating user information including username, email, password, profile pictures, and personal details.
 
 **Purpose:** Manage user account lifecycle and profile administration.
@@ -8,6 +9,7 @@ The accounts views module handles user authentication, registration, and profile
 **Responsibility:** Handle authentication, registration, profile CRUD operations, and user data updates.
 
 ## 2. File Location
+
 - **Source path:** `accounts/views.py`
 
 ## 3. Key Components
@@ -18,22 +20,26 @@ The accounts views module handles user authentication, registration, and profile
 
 **HTTP Methods:** POST
 
-**Parameters:** 
+**Parameters:**
+
 - `username`: Desired username (string)
 - `email`: Email address (string)
 - `password1`: Password (string)
 - `password2`: Password confirmation (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Validations:**
+
 1. Passwords must match
 2. Username must be unique
 3. Email must be unique
 
 **Side Effects:**
+
 - Creates new User object
 - Creates associated UserProfile with role='customer'
 
@@ -46,14 +52,17 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `username`: User's username (string)
 - `password`: User's password (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': 'Invalid username or password'}`
 
 **Side Effects:**
+
 - Creates session for authenticated user
 - Updates request.user object
 
@@ -66,15 +75,18 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** GET, POST
 
 **Parameters (POST):**
+
 - Form data from ProfileEditForm (username, password, profile_image)
 
 **Returns:**
+
 - GET: Rendered template with form
 - POST: Redirect to customer_dashboard on success
 
 **Template:** `accounts/edit_profile.html`
 
 **Initial Form Values:**
+
 - username from request.user.username
 - profile_image from current profile
 
@@ -87,16 +99,20 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `username`: New desired username (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Validations:**
+
 - New username must be unique (excluding current user)
 
 **Side Effects:**
+
 - Updates User.username
 - Saves to database
 
@@ -109,16 +125,20 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `email`: New email address (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Validations:**
+
 - New email must be unique (excluding current user)
 
 **Side Effects:**
+
 - Updates User.email
 - Saves to database
 
@@ -131,18 +151,22 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `profile_image`: Image file from request.FILES
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Side Effects:**
+
 - Deletes old profile image if exists (and not default)
 - Saves new profile image to UserProfile
 - Updates database
 
 **File Handling:**
+
 - Checks if old image exists and is not default
 - Removes old file from file system
 - Saves new file to media directory
@@ -156,19 +180,23 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `old_password`: Current password (string)
 - `new_password1`: New password (string)
 - `new_password2`: New password confirmation (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Validations:**
+
 - Old password must be correct
 - New passwords must match
 
 **Side Effects:**
+
 - Sets new password
 - Updates session authentication (prevents logout)
 - Saves to database
@@ -182,15 +210,18 @@ The accounts views module handles user authentication, registration, and profile
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `dob`: Date of birth (string, optional)
 - `phone`: Phone number (string)
 - `address`: Address (string)
 
 **Returns:** JSON response
+
 - Success: `{'success': True}`
 - Failure: `{'success': False, 'error': '<message>'}`
 
 **Side Effects:**
+
 - Updates UserProfile fields
 - Saves to database
 
@@ -199,6 +230,7 @@ The accounts views module handles user authentication, registration, and profile
 ## 4. Execution Flow
 
 **Registration Flow:**
+
 ```
 1. User submits registration form (POST)
 2. Validate password match
@@ -211,6 +243,7 @@ The accounts views module handles user authentication, registration, and profile
 ```
 
 **Login Flow:**
+
 ```
 1. User submits credentials (POST)
 2. Django authenticate() validates user
@@ -220,6 +253,7 @@ The accounts views module handles user authentication, registration, and profile
 ```
 
 **Password Update Flow:**
+
 ```
 1. User submits old + new passwords (POST)
 2. Verify old password is correct
@@ -231,6 +265,7 @@ The accounts views module handles user authentication, registration, and profile
 ```
 
 **Profile Photo Update Flow:**
+
 ```
 1. User uploads image file (POST)
 2. Get user's current profile
@@ -246,6 +281,7 @@ The accounts views module handles user authentication, registration, and profile
 ## 5. Data Flow
 
 ### Inputs
+
 - HTTP POST form data:
   - Registration: username, email, password1, password2
   - Login: username, password
@@ -253,6 +289,7 @@ The accounts views module handles user authentication, registration, and profile
   - Updates: Specific field values
 
 ### Processing
+
 - **Authentication:** Django's authenticate() & login() functions
 - **Validation:** Uniqueness checks, password comparison
 - **File handling:** Image upload, old file deletion
@@ -260,12 +297,14 @@ The accounts views module handles user authentication, registration, and profile
 - **Session management:** Create session, maintain auth hash
 
 ### Outputs
+
 - JSON responses for AJAX requests
 - Redirects to templates/dashboards
 - Updated User/UserProfile in database
 - Modified session state
 
 ### Dependencies
+
 - Django User model
 - UserProfile model
 - ProfileEditForm
@@ -275,6 +314,7 @@ The accounts views module handles user authentication, registration, and profile
 ## 6. Mermaid Diagrams
 
 **Registration & Login Flow:**
+
 ```mermaid
 flowchart TD
     A[User] -->|Register| B[register view]
@@ -284,7 +324,7 @@ flowchart TD
     E -->|Create| F[Create UserProfile]
     F -->|Save| G[(Database)]
     G -->|Success| H["JSON: success"]
-    
+
     A -->|Login| I[login_user view]
     I -->|Authenticate| J{Valid Creds?}
     J -->|No| K["JSON: error"]
@@ -294,22 +334,23 @@ flowchart TD
 ```
 
 **Profile Update Operations:**
+
 ```mermaid
 graph TD
     A["User Requests Update"] --> B{Update Type}
-    
+
     B -->|Username| C[update_username]
     B -->|Email| D[update_email]
     B -->|Photo| E[update_photo]
     B -->|Password| F[update_password]
     B -->|Details| G[update_details]
-    
+
     C --> H{Valid?}
     D --> H
     E --> I["Delete Old Image"]
     F --> J["Hash Password"]
     G --> H
-    
+
     I --> K[Save to DB]
     J --> L["Update Session"]
     H -->|Success| K
@@ -321,6 +362,7 @@ graph TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Password mismatch:** Returns validation error
 - **Duplicate username/email:** Returns already taken error
 - **Incorrect old password:** Password update fails
@@ -330,6 +372,7 @@ graph TD
 - **Session error:** update_session_auth_hash prevents logout
 
 ### Edge Cases
+
 - **User changes to same username:** Allowed (validation excludes self)
 - **Non-existent old image:** update_photo handles gracefully
 - **Default avatar:** Old file deletion skips default image
@@ -340,84 +383,99 @@ graph TD
 ## 8. Example Usage
 
 ### Registration
+
 **Endpoint:** `POST /accounts/register/`
 
 **Request:**
+
 ```json
 {
-    "username": "alice_wonder",
-    "email": "alice@example.com",
-    "password1": "SecurePass123!",
-    "password2": "SecurePass123!"
+  "username": "alice_wonder",
+  "email": "alice@example.com",
+  "password1": "SecurePass123!",
+  "password2": "SecurePass123!"
 }
 ```
 
 **Success Response:**
+
 ```json
-{"success": true}
+{ "success": true }
 ```
 
 **Error Response:**
+
 ```json
-{"success": false, "error": "Passwords do not match"}
+{ "success": false, "error": "Passwords do not match" }
 ```
 
 ### Login
+
 **Endpoint:** `POST /accounts/login/`
 
 **Request:**
+
 ```json
 {
-    "username": "alice_wonder",
-    "password": "SecurePass123!"
+  "username": "alice_wonder",
+  "password": "SecurePass123!"
 }
 ```
 
 **Response:**
+
 ```json
-{"success": true}
+{ "success": true }
 ```
 
 ### Update Password
+
 **Endpoint:** `POST /accounts/update/password/` [Login Required]
 
 **Request:**
+
 ```json
 {
-    "old_password": "SecurePass123!",
-    "new_password1": "NewPass456!",
-    "new_password2": "NewPass456!"
+  "old_password": "SecurePass123!",
+  "new_password1": "NewPass456!",
+  "new_password2": "NewPass456!"
 }
 ```
 
 **Response:**
+
 ```json
-{"success": true}
+{ "success": true }
 ```
 
 ### Update Profile Photo
+
 **Endpoint:** `POST /accounts/update/photo/` [Login Required, Multipart]
 
 **Request:** Multipart form with `profile_image` file
 
 **Response:**
+
 ```json
-{"success": true}
+{ "success": true }
 ```
 
 ### Update Personal Details
+
 **Endpoint:** `POST /accounts/update/details/` [Login Required]
 
 **Request:**
+
 ```json
 {
-    "dob": "1995-03-20",
-    "phone": "+1-555-0123",
-    "address": "456 Oak Avenue, City, State"
+  "dob": "1995-03-20",
+  "phone": "+1-555-0123",
+  "address": "456 Oak Avenue, City, State"
 }
 ```
 
 **Response:**
+
 ```json
-{"success": true}
+{ "success": true }
 ```

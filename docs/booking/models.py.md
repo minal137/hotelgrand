@@ -1,6 +1,7 @@
 # Booking Models Documentation
 
 ## 1. Overview
+
 The booking module contains models for managing hotel room reservations, room details, room images, and guest reviews. It handles room inventory, availability tracking, booking lifecycle, and customer feedback.
 
 **Purpose:** Define the data structure for room management, booking operations, and review systems.
@@ -8,6 +9,7 @@ The booking module contains models for managing hotel room reservations, room de
 **Responsibility:** Store room information, manage booking records, track room images, and maintain guest reviews.
 
 ## 2. File Location
+
 - **Source path:** `booking/models.py`
 
 ## 3. Key Components
@@ -17,6 +19,7 @@ The booking module contains models for managing hotel room reservations, room de
 **Purpose:** Represent a hotel room with its properties and pricing
 
 #### Fields
+
 - **`name`** (CharField) - Max length: 100, room identifier
 - **`image`** (ImageField) - Upload path: room_images/, primary room image
 - **`image_url`** (URLField) - Optional external image URL
@@ -30,6 +33,7 @@ The booking module contains models for managing hotel room reservations, room de
 - **`security_level`** (CharField) - Default: "Standard" (e.g., Standard, VIP, Luxury)
 
 #### Methods
+
 **`__str__()`** - Returns room name for admin display
 
 ---
@@ -39,6 +43,7 @@ The booking module contains models for managing hotel room reservations, room de
 **Purpose:** Store multiple images for each room with captions and external links
 
 #### Fields
+
 - **`room`** (ForeignKey) - Links to Room model, cascade delete, related_name: "images"
 - **`image`** (ImageField) - Upload path: room_images/, optional
 - **`image_url`** (URLField) - External image URL, optional
@@ -48,11 +53,13 @@ The booking module contains models for managing hotel room reservations, room de
 #### Methods
 
 **`get_image_source()`**
+
 - **Purpose:** Return active image source (URL-based or file-based)
 - **Returns:** image_url if set, otherwise image.url if image exists, else None
 - **Logic:** Prioritizes external URLs over uploaded files
 
 **`clean()`** (Validation)
+
 - **Purpose:** Validate that exactly one image source is provided
 - **Rules:**
   - At least one of image or image_url must be provided
@@ -66,6 +73,7 @@ The booking module contains models for managing hotel room reservations, room de
 **Purpose:** Represent a room reservation with dates, pricing, and guest information
 
 #### Fields
+
 - **`room`** (ForeignKey) - Links to Room, cascade delete
 - **`guest_name`** (CharField) - Max 100, name of guest
 - **`check_in`** (DateTimeField) - Check-in date and time
@@ -78,7 +86,8 @@ The booking module contains models for managing hotel room reservations, room de
 
 #### Methods
 
-**`save(override_for_save, *args, **kwargs)`**
+**`save(override_for_save, \*args, **kwargs)`\*\*
+
 - **Purpose:** Auto-calculate total_price before saving
 - **Logic:**
   1. Calculate duration in days: (check_out - check_in).total_seconds() / 86400
@@ -94,6 +103,7 @@ The booking module contains models for managing hotel room reservations, room de
 **Purpose:** Store guest reviews for rooms with ratings
 
 #### Fields
+
 - **`room`** (ForeignKey) - Links to Room, cascade delete, related_name: "reviews"
 - **`user`** (ForeignKey) - Links to User, cascade delete
 - **`text`** (TextField) - Review content
@@ -101,6 +111,7 @@ The booking module contains models for managing hotel room reservations, room de
 - **`created_at`** (DateTimeField) - Auto-set on creation
 
 #### Methods
+
 **`__str__()`** - Returns format: "Review by {username} for {room_name}"
 
 ---
@@ -114,10 +125,12 @@ The booking module contains models for managing hotel room reservations, room de
 **Fields Included:** room, check_in, check_out, special_requests, rating, review
 
 **Widgets:**
+
 - check_in, check_out: HTML5 date inputs
 - special_requests, review: Textareas with 3 rows
 
 **Custom Validation `clean()`:**
+
 - Checks for booking conflicts
 - Validates that check_out is after check_in
 - Raises ValidationError if room already booked
@@ -127,6 +140,7 @@ The booking module contains models for managing hotel room reservations, room de
 ## 4. Execution Flow
 
 **Room Creation Flow:**
+
 ```
 1. Administrator creates room via admin panel
 2. Room fields validated and saved
@@ -135,6 +149,7 @@ The booking module contains models for managing hotel room reservations, room de
 ```
 
 **Booking Creation Flow:**
+
 ```
 1. Guest selects room and dates
 2. PrivateBookingForm validates availability
@@ -144,6 +159,7 @@ The booking module contains models for managing hotel room reservations, room de
 ```
 
 **Price Calculation:**
+
 ```
 1. Booking.save() called
 2. Calculate duration: (check_out_time - check_in_time) in seconds
@@ -154,6 +170,7 @@ The booking module contains models for managing hotel room reservations, room de
 ```
 
 **Review Submission:**
+
 ```
 1. Guest writes review text and rating
 2. Review object created with room and user ForeignKeys
@@ -164,30 +181,37 @@ The booking module contains models for managing hotel room reservations, room de
 ## 5. Data Flow
 
 ### Inputs
+
 **Room Creation:**
+
 - name, description, price, capacity, amenities, bedrooms, bathrooms, size, security_level
 - image file (optional) or image_url
 
 **Booking Creation:**
+
 - room_id, check_in, check_out, guest_name, special_requests
 - rating, review (optional)
 
 **Review Submission:**
+
 - room_id, user, text, rating
 
 ### Processing
+
 - **Validation:** Form validation for bookings, model validation for images
 - **Calculation:** Auto-calculation of total_price based on duration
 - **Relationships:** Foreign key constraints maintain referential integrity
 - **Timestamps:** Auto-population of created_at field
 
 ### Outputs
+
 - Room records with pricing and amenities
 - Booking records with calculated prices and status tracking
 - Review records linked to specific rooms and users
 - Image records associated with rooms
 
 ### Dependencies
+
 - Django ORM models
 - Decimal for price calculations
 - datetime for duration calculations
@@ -195,6 +219,7 @@ The booking module contains models for managing hotel room reservations, room de
 ## 6. Mermaid Diagrams
 
 **Entity Relationship Diagram:**
+
 ```mermaid
 erDiagram
     ROOM ||--o{ BOOKING : has
@@ -202,7 +227,7 @@ erDiagram
     ROOM ||--o{ REVIEW : receives
     BOOKING ||--o{ REVIEW : "linked_via"
     USER ||--o{ REVIEW : writes
-    
+
     ROOM {
         int id PK
         string name
@@ -215,7 +240,7 @@ erDiagram
         int size
         string security_level
     }
-    
+
     BOOKING {
         int id PK
         int room_id FK
@@ -228,7 +253,7 @@ erDiagram
         int rating
         text review
     }
-    
+
     ROOMIMAGE {
         int id PK
         int room_id FK
@@ -237,7 +262,7 @@ erDiagram
         string caption
         string link_url
     }
-    
+
     REVIEW {
         int id PK
         int room_id FK
@@ -249,6 +274,7 @@ erDiagram
 ```
 
 **Booking Price Calculation Flow:**
+
 ```mermaid
 flowchart TD
     A["Booking.save() Called"] --> B["Get check_in & check_out"]
@@ -264,6 +290,7 @@ flowchart TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid date range:** Check_in >= check_out not caught in model (caught in form)
 - **Overlapping bookings:** Form validation prevents conflicts
 - **Image validation:** Both image and image_url provided triggers ValidationError
@@ -271,6 +298,7 @@ flowchart TD
 - **Decimal precision:** DecimalField maintains precision, no rounding errors
 
 ### Edge Cases
+
 - **Same-day booking:** Duration < 1 day, minimum enforced to 1 day
 - **Fractional days:** Supports decimal pricing for hourly rates
 - **No images:** Room can exist without RoomImage objects
@@ -282,6 +310,7 @@ flowchart TD
 ## 8. Example Usage
 
 ### Creating a Room
+
 ```python
 from booking.models import Room
 
@@ -299,6 +328,7 @@ room = Room.objects.create(
 ```
 
 ### Creating a Booking
+
 ```python
 from booking.models import Booking, Room
 from datetime import datetime, timedelta
@@ -319,6 +349,7 @@ booking = Booking.objects.create(
 ```
 
 ### Adding Room Images
+
 ```python
 from booking.models import RoomImage
 
@@ -338,6 +369,7 @@ image = RoomImage.objects.create(
 ```
 
 ### Submitting a Review
+
 ```python
 from booking.models import Review
 from django.contrib.auth.models import User
@@ -352,6 +384,7 @@ review = Review.objects.create(
 ```
 
 ### Checking Availability
+
 ```python
 from booking.models import Booking
 from datetime import datetime

@@ -19,33 +19,33 @@ sequenceDiagram
 
     User->>Browser: Enter registration data
     Browser->>Views: POST /accounts/register/<br/>{username, email, pwd1, pwd2}
-    
+
     Views->>Views: Extract form data
     Views->>Views: Validate passwords match
     Views->>Views: Check username unique
     Views->>Views: Check email unique
-    
+
     Views->>Models: User.objects.create_user()<br/>(username, email, password)
     Models->>DB: INSERT INTO auth_user
-    
+
     Views->>Models: UserProfile.objects.create()<br/>(user, role='customer')
     Models->>DB: INSERT INTO accounts_userprofile
-    
+
     Models-->>Views: UserProfile instance
     Views-->>Browser: JSON {success: true}
     Browser-->>User: Show login page
-    
+
     User->>Browser: Enter credentials
     Browser->>Views: POST /accounts/login/<br/>{username, password}
-    
+
     Views->>Views: Django authenticate()
     Views->>Models: User.objects.get()
     Models->>DB: SELECT * FROM auth_user
-    
+
     DB-->>Models: User instance
     Models-->>Views: User object
     Views->>Views: Check password_hash
-    
+
     Views->>Views: login() creates session
     Views-->>Browser: JSON {success: true}
     Browser-->>User: Redirect to dashboard
@@ -58,22 +58,22 @@ graph TD
     A["User Views Rooms"] -->|GET /rooms/| B["core.views.public_booking"]
     B -->|Query| C["Room.objects.all"]
     C -->|Read| D["[Room1, Room2, ...]"]
-    
+
     E["User Selects Room"] -->|POST /book/private/| F["booking.views.private_booking"]
     F -->|Parse| G["check_in, check_out, room_id"]
-    
+
     G -->|Query Conflicts| H["Booking.objects.filter<br/>overlapping dates"]
     H -->|Read| I["DB: hotelgrand_db"]
     I -->|conflicts?| J{Conflict<br/>Found?}
-    
+
     J -->|Yes| K["Error Message"]
     K -->|Redirect| L["booking page"]
-    
+
     J -->|No| M["Create Booking<br/>object"]
     M -->|Auto-calc<br/>total_price| N["price × duration"]
     N -->|Save| O["Booking.save()"]
     O -->|Write| P["INSERT INTO<br/>booking_booking"]
-    
+
     P -->|Success| Q["Redirect Success"]
     Q -->|Message| R["booking_success"]
     R -->|HTML| S["User Confirmation"]
@@ -94,32 +94,32 @@ sequenceDiagram
     Views->>Views: Check login_required
     Views->>Models: Booking.objects.filter()<br/>guest_name=user.username
     Models->>DB: SELECT * FROM booking_booking<br/>WHERE guest_name=?
-    
+
     DB-->>Models: [Booking1]
     Models-->>Views: Booking object
     Views->>Views: Check status='checked_in'
-    
+
     Views->>Models: MenuItem.objects.all()
     Models->>DB: SELECT * FROM menu_menuitem
-    
+
     DB-->>Models: [Item1, Item2, ...]
     Models-->>Views: QuerySet of items
     Views-->>Browser: Render menu.html<br/>with items & booking
     Browser-->>Guest: Display menu
-    
+
     Guest->>Browser: Select item, qty=2
     Browser->>Views: POST /menu/place-order/<br/>{item_id: 3, quantity: 2}
-    
+
     Views->>Views: Extract item_id, quantity
     Views->>Models: MenuItem.objects.get(id=3)
     Models->>DB: SELECT * FROM menu_menuitem<br/>WHERE id=3
-    
+
     DB-->>Models: MenuItem
     Models-->>Views: Item object
-    
+
     Views->>Models: Order.objects.create()<br/>user, booking, item, qty
     Models->>DB: INSERT INTO menu_order
-    
+
     DB-->>Models: Order instance
     Models-->>Views: Order created
     Views-->>Browser: JSON {success: true}
@@ -132,21 +132,21 @@ sequenceDiagram
 graph LR
     A["Guest Checks In"] -->|Auto-update| B["Booking.status<br/>= checked_in"]
     B -->|Saved| C[(Database)]
-    
+
     D["Guest Views Room"] -->|GET /book/room/5/| E["room_detail view"]
     E -->|Query| F["Review.objects.filter<br/>room=5"]
     F -->|Read| C
     C -->|Results| G["[Review1, Review2]"]
-    
+
     H["Guest Submits Review"] -->|POST /book/submit-review/| I["submit_review view"]
     I -->|Verify| J{Booking<br/>checked_in?}
     J -->|No| K["Error message"]
     J -->|Yes| L["Create Review<br/>object"]
-    
+
     L -->|user, room, text, rating| M["Review.objects.create()"]
     M -->|Write| N["INSERT INTO<br/>booking_review"]
     N -->|Saved| C
-    
+
     O["Display Room"] -->|Aggregate| P["Calculate<br/>average_rating"]
     P -->|Sum ratings/count| Q["avg = 4.3"]
     Q -->|Display| R["Room Detail Page"]
@@ -168,25 +168,25 @@ sequenceDiagram
     DB-->>Models: UserProfile instance
     Models-->>Form: Pre-populate form
     Form-->>User: Display form with data
-    
+
     User->>Form: Submit updated data<br/>{username, password, image}
-    
+
     Form->>Form: Validate fields
     Form->>Save: save(commit=False)
     Save->>Models: Create profile_instance (unsaved)
     Save->>Save: Get profile.user
     Save->>Models: Update User.username
-    
+
     alt if password provided
         Save->>Models: user.set_password(pwd_hash)
     end
-    
+
     Save->>Models: user.save()
     Models->>DB: UPDATE auth_user SET username=?
-    
+
     Save->>Models: profile.save()
     Models->>DB: UPDATE accounts_userprofile<br/>SET profile_image=?
-    
+
     DB-->>Models: Rows updated
     Models-->>User: Confirmation
     User->>User: Redirect to dashboard
@@ -197,20 +197,20 @@ sequenceDiagram
 ```mermaid
 graph TD
     A["User Searches<br/>check_in, check_out"] -->|POST /book/check/| B["check_availability view"]
-    
+
     B -->|Form validation| C["AvailabilityForm.is_valid()"]
     C -->|Parse| D["dates extracted"]
-    
+
     D -->|Query each room| E["Room.objects.all()"]
     E -->|Read| F[(Database)]
     F -->|Results| G["Room list"]
-    
+
     H["Filter Logic"] -->|For each room| I["Booking.objects.filter"]
     I -->|check_in < user_checkout<br/>check_out > user_checkin<br/>status=confirmed| J["Overlapping?"]
-    
+
     J -->|Yes| K["Room unavailable<br/>Skip"]
     J -->|No| L["Room available<br/>Add to list"]
-    
+
     M["Paginate Results"] -->|9 per page| N["page_obj"]
     N -->|Context| O["Render template"]
     O -->|Display| P["Available rooms"]
@@ -221,6 +221,7 @@ graph TD
 ### Accounts Module
 
 **Inputs:**
+
 ```
 Registration:
   - username (string, required)
@@ -242,6 +243,7 @@ Profile Edit:
 ```
 
 **Outputs:**
+
 ```
 Stored in Database:
   - User record (auth_user table)
@@ -251,6 +253,7 @@ Stored in Database:
 ```
 
 **Database Operations:**
+
 ```
 CREATE: User, UserProfile, Profile images
 READ: User authentication, profile retrieval
@@ -263,6 +266,7 @@ DELETE: User and profile (cascade)
 ### Booking Module
 
 **Inputs:**
+
 ```
 Booking:
   - room_id (integer)
@@ -282,6 +286,7 @@ Review:
 ```
 
 **Outputs:**
+
 ```
 Stored in Database:
   - Booking record with:
@@ -297,6 +302,7 @@ Display Data:
 ```
 
 **Database Operations:**
+
 ```
 CREATE: Booking, Review, RoomImage
 READ: Room details, availability checking, reviews
@@ -305,6 +311,7 @@ DELETE: Bookings, reviews (with cascade)
 ```
 
 **Price Calculation:**
+
 ```
 total_price = room.price × max(days_between_dates, 1)
 - Handles fractional days via Decimal precision
@@ -316,6 +323,7 @@ total_price = room.price × max(days_between_dates, 1)
 ### Menu Module
 
 **Inputs:**
+
 ```
 Order:
   - item_id (integer)
@@ -329,6 +337,7 @@ Rating:
 ```
 
 **Outputs:**
+
 ```
 Stored in Database:
   - Order record with:
@@ -345,6 +354,7 @@ Display Data:
 ```
 
 **Database Operations:**
+
 ```
 CREATE: Order, Rating
 READ: MenuItem, Category, Order history
@@ -353,6 +363,7 @@ DELETE: Orders, ratings (with cascade)
 ```
 
 **Rating Aggregation:**
+
 ```
 average_rating = Sum(all_ratings) / Count(all_ratings)
 - Calculated on each access (no caching)
@@ -365,12 +376,14 @@ average_rating = Sum(all_ratings) / Count(all_ratings)
 ### Core Module
 
 **Inputs:**
+
 ```
 GET parameters:
   - page (optional, for pagination)
 ```
 
 **Outputs:**
+
 ```
 Display Data:
   - Home page (static template)
@@ -381,6 +394,7 @@ Display Data:
 ```
 
 **Database Operations:**
+
 ```
 READ: Room.objects.all()
       MenuItem.objects.all()
@@ -395,6 +409,7 @@ READ: Room.objects.all()
 ### Complete HTTP Request Example
 
 **Request: User Books Room**
+
 ```http
 POST /book/private/ HTTP/1.1
 Host: hotelgrand.local
@@ -405,6 +420,7 @@ room_id=5&check_in=2024-03-15T15:00&check_out=2024-03-18T11:00&guest_count=2&spe
 ```
 
 **Data Processing:**
+
 ```
 1. URL Router matches /book/private/ → booking.views.private_booking
 2. Middleware chain:
@@ -423,6 +439,7 @@ room_id=5&check_in=2024-03-15T15:00&check_out=2024-03-18T11:00&guest_count=2&spe
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 302 Found
 Location: /book/booking/success/
@@ -432,6 +449,7 @@ Set-Cookie: messages=...
 ### Complete Database Example
 
 **Tables Involved in Booking:**
+
 ```
 auth_user
 ├── id, username, email, password, ...
@@ -455,6 +473,7 @@ booking_review
 ```
 
 **Sample Data Flow:**
+
 ```
 User Request → Load Room (booking_room) → Check conflicts (query booking_booking)
             → Calculate price
@@ -466,6 +485,7 @@ User Request → Load Room (booking_room) → Check conflicts (query booking_boo
 ## Caching & Performance Considerations
 
 ### Current Implementation (No Caching)
+
 - All queries hit database directly
 - MenuItem.average_rating() recalculated each access
 - Room availability filtered for each request
@@ -474,12 +494,14 @@ User Request → Load Room (booking_room) → Check conflicts (query booking_boo
 ### Data Access Patterns
 
 **Hot Paths (Frequent Access):**
+
 1. Room listing - public_booking view (accessed by every guest)
 2. Menu listing - public_menu view (accessed by every guest)
 3. Availability check - frequent during booking season
 4. Room detail - accessed per user interest
 
 **Optimization Opportunities:**
+
 ```python
 # Example: Add select_related for foreign keys
 reviews = Review.objects.select_related('user', 'room')
@@ -494,6 +516,7 @@ cache.set(f'room_{room_id}_avg_rating', avg_rating, timeout=3600)
 ## File Storage Data Flow
 
 ### Profile Image Upload
+
 ```
 User → Form (multipart/form-data) → View validates
      → Check old image exists
@@ -504,6 +527,7 @@ User → Form (multipart/form-data) → View validates
 ```
 
 ### Room Image Upload
+
 ```
 Admin → Admin interface
       → Create RoomImage instance
@@ -516,6 +540,7 @@ Admin → Admin interface
 ## Error Data Flow
 
 ### Validation Error Example
+
 ```
 User submits booking with check_out before check_in
      ↓
@@ -533,6 +558,7 @@ Re-render form with errors
 ```
 
 ### Database Constraint Example
+
 ```
 Try to delete Room with related Bookings
      ↓
@@ -550,6 +576,7 @@ Commit transaction
 ## Temporal Data Flows
 
 ### Booking Status Lifecycle
+
 ```
 Timeline:
   T1: User creates booking (status='confirmed')
@@ -564,6 +591,7 @@ Data persistence:
 ```
 
 ### Order Status Progression
+
 ```
 Timeline:
   T1: Guest places order (status='pending')
@@ -580,23 +608,27 @@ Data tracking:
 ## External Dependencies & Data Sources
 
 **MySQL Database:**
+
 - Central data store
 - All models persisted here
 - Django ORM abstraction layer
 
 **File System (Media):**
+
 - Profile images
 - Room images
 - Menu images
 - Served via Django's static file handler (dev only)
 
 **Session Storage:**
+
 - Django session framework (database-backed by default)
 - Stores: authentication state, csrf token
 
 ## Data Export/Reporting Flows (Potential)
 
 ### Booking Report Data
+
 ```
 Manager queries: Bookings for date range
      ↓
@@ -610,6 +642,7 @@ Export: CSV/PDF generation
 ```
 
 ### Revenue Calculation
+
 ```
 Sum all confirmed/completed bookings: total_price
 Filter by date range
@@ -620,6 +653,7 @@ Calculate average nightly rate
 ## Data Integrity Constraints
 
 ### Foreign Key Relationships
+
 - Booking → Room (cascade delete)
 - Review → Room (cascade delete)
 - Review → User (cascade delete)
@@ -628,11 +662,13 @@ Calculate average nightly rate
 - Order → MenuItem (cascade delete)
 
 ### Uniqueness Constraints
+
 - User.username (enforced by Django)
 - User.email (custom validation in register view)
 - UserProfile (1:1 with User)
 
 ### Validation Rules
+
 - Check_out > check_in (form validation)
 - Room availability (booking conflict check)
 - At least one image source (RoomImage.clean())

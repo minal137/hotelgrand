@@ -18,6 +18,7 @@ Welcome to the Hotel Grand project documentation system. This documentation prov
 **File:** [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
 
 Comprehensive overview of the Hotel Grand system architecture including:
+
 - System architecture diagram
 - Module structure and responsibilities
 - Data model relationships
@@ -26,6 +27,7 @@ Comprehensive overview of the Hotel Grand system architecture including:
 - Deployment considerations
 
 **Key Sections:**
+
 - 4 main application modules
 - 5-layer architecture (Client → Django → Application → Models → Data)
 - Database schema overview
@@ -39,6 +41,7 @@ Comprehensive overview of the Hotel Grand system architecture including:
 **File:** [`docs/DATA_FLOW.md`](./DATA_FLOW.md)
 
 End-to-end data flow documentation showing how data moves through the system:
+
 - User registration & authentication flow
 - Room booking process
 - Food ordering flow
@@ -49,6 +52,7 @@ End-to-end data flow documentation showing how data moves through the system:
 - Error handling flows
 
 **Includes:**
+
 - Sequence diagrams for major operations
 - Data input/output by module
 - HTTP request/response examples
@@ -60,32 +64,41 @@ End-to-end data flow documentation showing how data moves through the system:
 ## 📖 Module Documentation
 
 ### Accounts Module
+
 User authentication and profile management
 
 **Model Documentation:**
+
 - [`accounts/models.py.md`](./accounts/models.py.md) - UserProfile model
 
 **View Documentation:**
+
 - [`accounts/views.py.md`](./accounts/views.py.md) - Registration, login, profile management
 
 **Form Documentation:**
+
 - [`accounts/forms.py.md`](./accounts/forms.py.md) - ProfileEditForm
 
 **URL Configuration:**
+
 - [`accounts/urls.py.md`](./accounts/urls.py.md) - Account routing endpoints
 
 ---
 
 ### Booking Module
+
 Room management and reservation system
 
 **Model Documentation:**
+
 - [`booking/models.py.md`](./booking/models.py.md) - Room, Booking, RoomImage, Review models
 
 **View Documentation:**
+
 - [`booking/views.py.md`](./booking/views.py.md) - Booking operations, availability, reviews
 
 **Form Documentation:**
+
 - [`booking/forms.py.md`](./booking/forms.py.md) - PrivateBookingForm, AvailabilityForm, conflict detection
 
 **No URL Documentation:** Booking URLs included in main hotelgrand/urls.py
@@ -93,26 +106,33 @@ Room management and reservation system
 ---
 
 ### Menu Module
+
 Food service and ordering system
 
 **Model Documentation:**
+
 - [`menu/models.py.md`](./menu/models.py.md) - MenuItem, Category, Rating, Order models
 
 **View Documentation:**
+
 - [`menu/views.py.md`](./menu/views.py.md) - Menu display, order placement
 
 **URL Configuration:**
+
 - [`menu/urls.py.md`](./menu/urls.py.md) - Menu routing endpoints
 
 ---
 
 ### Core Module
+
 Public-facing pages and utilities
 
 **View Documentation:**
+
 - [`core/views.py.md`](./core/views.py.md) - Home, about, public browsing pages
 
 **Model Documentation:**
+
 - [`core/models.py.md`](./core/models.py.md) - Empty (placeholder for future models)
 
 ---
@@ -124,6 +144,7 @@ Public-facing pages and utilities
 **File:** [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md)
 
 Django configuration including:
+
 - Debug and security settings
 - Installed applications (4 custom + 6 Django apps)
 - Middleware stack (7 components)
@@ -138,6 +159,7 @@ Django configuration including:
 **File:** [`hotelgrand/urls.py.md`](./hotelgrand/urls.py.md)
 
 Main URL dispatcher mapping requests to views:
+
 - Admin panel
 - Public endpoints (home, about, rooms, menu)
 - Authentication routes (login, logout)
@@ -184,22 +206,26 @@ docs/
 ## 🎯 How to Use This Documentation
 
 ### For New Developers
+
 1. **Start here:** Read [`ARCHITECTURE.md`](./ARCHITECTURE.md) for system overview
 2. **Understand flows:** Study [`DATA_FLOW.md`](./DATA_FLOW.md)
 3. **Dive deep:** Read individual module documentation
 4. **Configuration:** Check [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md) for Django setup
 
 ### For Understanding a Specific Feature
+
 1. **Room Booking:** See [`booking/models.py.md`](./booking/models.py.md) and [`booking/views.py.md`](./booking/views.py.md)
 2. **User Accounts:** See [`accounts/models.py.md`](./accounts/models.py.md) and [`accounts/views.py.md`](./accounts/views.py.md)
 3. **Food Ordering:** See [`menu/models.py.md`](./menu/models.py.md) and [`menu/views.py.md`](./menu/views.py.md)
 
 ### For Understanding Data Flow
+
 - **Booking process:** See [`DATA_FLOW.md`](./DATA_FLOW.md) section "Room Booking Flow"
 - **Order placement:** See [`DATA_FLOW.md`](./DATA_FLOW.md) section "Food Order Flow"
 - **Authentication:** See [`DATA_FLOW.md`](./DATA_FLOW.md) section "User Registration & Authentication Flow"
 
 ### For Configuration Questions
+
 - **What apps are installed?** See [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md)
 - **What URLs are available?** See [`hotelgrand/urls.py.md`](./hotelgrand/urls.py.md)
 - **How is database configured?** See [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md)
@@ -209,6 +235,7 @@ docs/
 ## 🔍 Key Concepts
 
 ### Models & Database
+
 - **User Management:** Django's User + custom UserProfile
 - **Room Management:** Room, RoomImage (multiple images per room)
 - **Bookings:** Booking with auto-calculated pricing based on duration
@@ -216,16 +243,19 @@ docs/
 - **Food Service:** MenuItem (with category), Order, Rating
 
 ### Views & Business Logic
+
 - **Public Views:** Home, about, room catalog, menu catalog (no auth required)
 - **Protected Views:** Private booking, food ordering, reviews (login required)
 - **Admin Interface:** Django admin for database management
 
 ### Forms & Validation
+
 - **Booking Validation:** Date range checking, room conflict detection
 - **Profile Forms:** Image upload, password hashing
 - **Availability Filtering:** Date-based room search
 
 ### Security
+
 - Authentication: Django's built-in auth system
 - CSRF Protection: Middleware + token validation
 - Password Security: Hashing with Django's password hasher
@@ -235,6 +265,7 @@ docs/
 ## 📊 Data Models Summary
 
 ### User-Related
+
 ```
 User (Django)
   ├── id, username, email, password
@@ -247,6 +278,7 @@ User (Django)
 ```
 
 ### Room-Related
+
 ```
 Room
   ├── name, description, price, capacity
@@ -273,6 +305,7 @@ Review
 ```
 
 ### Food-Related
+
 ```
 Category
   ├── name, description
@@ -301,21 +334,25 @@ Order
 ## 🔗 Relationships & Foreign Keys
 
 **User Relationships:**
+
 - User ←→ UserProfile (OneToOne)
 - User → Review (many, writes reviews)
 - User → Rating (many, rates items)
 - User → Order (many, places orders)
 
 **Room Relationships:**
+
 - Room → Booking (many)
 - Room → RoomImage (many)
 - Room → Review (many)
 
 **Booking Relationships:**
+
 - Booking → Order (many, contains orders)
 - Booking ← Review (linked via Booking in data flow)
 
 **Menu Relationships:**
+
 - Category → MenuItem (many)
 - MenuItem → Rating (many)
 - MenuItem → Order (many)
@@ -325,6 +362,7 @@ Order
 ## 🚀 Endpoints Summary
 
 ### Public Endpoints
+
 ```
 GET  /                    Home page
 GET  /about/             About page
@@ -333,6 +371,7 @@ GET  /menu/              Menu catalog (paginated)
 ```
 
 ### Authentication
+
 ```
 GET/POST /login/         User login
 GET      /logout/        User logout
@@ -340,6 +379,7 @@ POST     /accounts/register/   User registration
 ```
 
 ### User Account (Login Required)
+
 ```
 GET/POST /accounts/edit/           Edit profile
 POST     /accounts/update/username/ Update username
@@ -350,6 +390,7 @@ POST     /accounts/update/details/  Update personal info
 ```
 
 ### Room Booking (Login Required)
+
 ```
 GET/POST /book/private/        Private booking with filters
 POST     /book/check/          Check availability
@@ -360,6 +401,7 @@ POST     /book/submit-review/  Submit room review
 ```
 
 ### Food Menu (Login + Checked-in Required)
+
 ```
 GET      /menu/private-menu/   View menu (must be checked-in)
 POST     /menu/place-order/    Place food order
@@ -381,12 +423,14 @@ POST     /menu/place-order/    Place food order
 ## ⚠️ Important Notes
 
 ### Development Only
+
 - `DEBUG = True` (must be False in production)
 - `SECRET_KEY` is insecure (change in production)
 - `ALLOWED_HOSTS` is empty (specify domains in production)
 - Media files served by Django (use nginx/Apache in production)
 
 ### Current Limitations
+
 - No REST API (web-only)
 - No async task queue
 - No caching layer
@@ -395,6 +439,7 @@ POST     /menu/place-order/    Place food order
 - Single MySQL database instance
 
 ### Database
+
 - **Engine:** MySQL
 - **Database:** hotelgrand_db
 - **User:** django_user
@@ -423,16 +468,19 @@ Each file follows a consistent 8-section structure:
 **Beginner → Intermediate → Advanced**
 
 ### Level 1: Overview
+
 1. Read [`ARCHITECTURE.md`](./ARCHITECTURE.md) to understand system layout
 2. Skim [`DATA_FLOW.md`](./DATA_FLOW.md) for high-level flows
 3. Check [`hotelgrand/urls.py.md`](./hotelgrand/urls.py.md) for available endpoints
 
 ### Level 2: Core Features
+
 1. Study [`booking/models.py.md`](./booking/models.py.md) for data structures
 2. Read [`booking/views.py.md`](./booking/views.py.md) for business logic
 3. Learn [`accounts/models.py.md`](./accounts/models.py.md) for user system
 
 ### Level 3: Advanced Topics
+
 1. Deep dive into [`booking/views.py.md`](./booking/views.py.md) for conflict detection
 2. Study [`DATA_FLOW.md`](./DATA_FLOW.md) for complete request cycles
 3. Review [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md) for configuration details
@@ -442,6 +490,7 @@ Each file follows a consistent 8-section structure:
 ## 🔧 Quick Reference
 
 ### File Organization
+
 ```
 hotelgrand/              # Main project folder
 ├── accounts/            # User account management
@@ -456,6 +505,7 @@ hotelgrand/              # Main project folder
 ```
 
 ### Key Technologies
+
 - **Framework:** Django 5.2.4
 - **Database:** MySQL
 - **Frontend:** HTML, CSS, JavaScript
@@ -467,18 +517,21 @@ hotelgrand/              # Main project folder
 ## 📞 Getting Help
 
 ### For Understanding a Feature
+
 1. Find it in the architecture diagram ([`ARCHITECTURE.md`](./ARCHITECTURE.md))
 2. Read the relevant module documentation
 3. Check [`DATA_FLOW.md`](./DATA_FLOW.md) for the complete flow
 4. Look at example usage section in module docs
 
 ### For Understanding Code Flow
+
 1. Find the view in [`hotelgrand/urls.py.md`](./hotelgrand/urls.py.md)
 2. Read the view documentation (e.g., [`booking/views.py.md`](./booking/views.py.md))
 3. Check the models documentation for data structures
 4. Review data flow section in [`DATA_FLOW.md`](./DATA_FLOW.md)
 
 ### For Configuration Questions
+
 - Database: [`hotelgrand/settings.py.md`](./hotelgrand/settings.py.md)
 - URLs: [`hotelgrand/urls.py.md`](./hotelgrand/urls.py.md)
 - Apps: [`ARCHITECTURE.md`](./ARCHITECTURE.md) → Module Structure
@@ -487,24 +540,24 @@ hotelgrand/              # Main project folder
 
 ## 📖 Complete File Index
 
-| File | Type | Purpose |
-|------|------|---------|
-| `ARCHITECTURE.md` | System | Overall architecture and design |
-| `DATA_FLOW.md` | System | Data movement and processing |
-| `accounts/models.py.md` | Module | User profile data model |
-| `accounts/views.py.md` | Module | Authentication and profile views |
-| `accounts/forms.py.md` | Module | Profile editing form |
-| `accounts/urls.py.md` | Module | Account URL routing |
-| `booking/models.py.md` | Module | Room and booking data models |
-| `booking/views.py.md` | Module | Booking and availability logic |
-| `booking/forms.py.md` | Module | Booking and search forms |
-| `menu/models.py.md` | Module | Food and order data models |
-| `menu/views.py.md` | Module | Menu and ordering views |
-| `menu/urls.py.md` | Module | Menu URL routing |
-| `core/models.py.md` | Module | Core model (empty) |
-| `core/views.py.md` | Module | Public page views |
-| `hotelgrand/settings.py.md` | Config | Django settings |
-| `hotelgrand/urls.py.md` | Config | Main URL dispatcher |
+| File                        | Type   | Purpose                          |
+| --------------------------- | ------ | -------------------------------- |
+| `ARCHITECTURE.md`           | System | Overall architecture and design  |
+| `DATA_FLOW.md`              | System | Data movement and processing     |
+| `accounts/models.py.md`     | Module | User profile data model          |
+| `accounts/views.py.md`      | Module | Authentication and profile views |
+| `accounts/forms.py.md`      | Module | Profile editing form             |
+| `accounts/urls.py.md`       | Module | Account URL routing              |
+| `booking/models.py.md`      | Module | Room and booking data models     |
+| `booking/views.py.md`       | Module | Booking and availability logic   |
+| `booking/forms.py.md`       | Module | Booking and search forms         |
+| `menu/models.py.md`         | Module | Food and order data models       |
+| `menu/views.py.md`          | Module | Menu and ordering views          |
+| `menu/urls.py.md`           | Module | Menu URL routing                 |
+| `core/models.py.md`         | Module | Core model (empty)               |
+| `core/views.py.md`          | Module | Public page views                |
+| `hotelgrand/settings.py.md` | Config | Django settings                  |
+| `hotelgrand/urls.py.md`     | Config | Main URL dispatcher              |
 
 ---
 
@@ -513,6 +566,7 @@ hotelgrand/              # Main project folder
 Documentation created: January 2025
 
 Covers:
+
 - Django 5.2.4
 - Hotel Grand v1.0
 - 4 application modules

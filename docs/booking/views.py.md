@@ -1,6 +1,7 @@
 # Booking Views Documentation
 
 ## 1. Overview
+
 The booking views module manages the complete booking lifecycle including availability checking, room detail display, booking creation, extension, and guest reviews. It handles both public and private (authenticated) booking operations with conflict detection and pricing calculations.
 
 **Purpose:** Handle hotel room booking operations, availability management, and review submissions.
@@ -8,6 +9,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Responsibility:** Process bookings, manage room availability, extend reservations, and collect guest feedback.
 
 ## 2. File Location
+
 - **Source path:** `booking/views.py`
 
 ## 3. Key Components
@@ -17,6 +19,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Purpose:** Update booking status from "confirmed" to "completed" for past checkouts
 
 **Process:**
+
 1. Query Bookings with check_out < current time and status="confirmed"
 2. Update status to "completed"
 3. Save changes to database
@@ -35,7 +38,8 @@ The booking views module manages the complete booking lifecycle including availa
 
 **Returns:** Rendered template `public/booking_form.html`
 
-**Context:** 
+**Context:**
+
 - `room`: Room object
 
 ---
@@ -47,6 +51,7 @@ The booking views module manages the complete booking lifecycle including availa
 **HTTP Methods:** GET, POST
 
 **POST Parameters:**
+
 - `room_id`: Selected room ID
 - `check_in`: Check-in datetime (format: "%Y-%m-%dT%H:%M")
 - `check_out`: Check-out datetime
@@ -54,6 +59,7 @@ The booking views module manages the complete booking lifecycle including availa
 - `special_requests`: Optional notes
 
 **Process:**
+
 1. Expire old bookings (status cleanup)
 2. If GET: Show all rooms with availability form
 3. If POST (availability search):
@@ -70,10 +76,12 @@ The booking views module manages the complete booking lifecycle including availa
 **Returns:** Rendered `customer/private_booking.html`
 
 **Validations:**
+
 - Check_out must be after check_in
 - Room must not have conflicting confirmed bookings
 
 **Error Messages:**
+
 - "Check-out must be after check-in"
 - "Room is already booked for selected dates"
 
@@ -88,6 +96,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Form:** AvailabilityForm (check_in, check_out)
 
 **Process:**
+
 1. Expire old bookings
 2. If POST with form data:
    - Parse check_in/check_out dates
@@ -97,6 +106,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Returns:** Rendered `customer/check_availability.html`
 
 **Context:**
+
 - `form`: AvailabilityForm instance
 - `available_rooms`: List of filtered Room objects
 
@@ -111,6 +121,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Returns:** Redirect to home page with success message
 
 **Side Effects:**
+
 - Displays success message to user
 
 ---
@@ -124,6 +135,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Parameters:** room_id (integer)
 
 **Process:**
+
 1. Expire old bookings
 2. Get room by ID (404 if not found)
 3. Get 5 most recent reviews (ordered by created_at DESC)
@@ -133,6 +145,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Returns:** Rendered `customer/room_detail.html`
 
 **Context:**
+
 - `room`: Room object with all details
 - `reviews`: QuerySet of 5 most recent Review objects
 - `existing_booking`: Booking object if user has active booking for room
@@ -146,10 +159,12 @@ The booking views module manages the complete booking lifecycle including availa
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `booking_id`: ID of booking to extend
 - `new_check_out`: New checkout datetime
 
 **Process:**
+
 1. Validate booking_id and new_check_out provided
 2. Get booking (verify user ownership via guest_name)
 3. Parse new_checkout_dt (supports multiple datetime formats)
@@ -166,6 +181,7 @@ The booking views module manages the complete booking lifecycle including availa
 **Returns:** Redirect to room_detail
 
 **Error Handling:**
+
 - Missing booking_id or new_check_out: Show error
 - new_checkout <= current checkout: Show error
 - Room conflict: Show error
@@ -181,11 +197,13 @@ The booking views module manages the complete booking lifecycle including availa
 **HTTP Methods:** POST
 
 **Parameters:**
+
 - `room_id`: Room being reviewed
 - `text`: Review text
 - (Rating comes from Booking.rating if submitted via booking)
 
 **Process:**
+
 1. Get room by ID
 2. Check if user has checked-in booking for room
 3. If no booking with status="checked_in":
@@ -203,6 +221,7 @@ The booking views module manages the complete booking lifecycle including availa
 ## 4. Execution Flow
 
 **Private Booking Flow (POST with booking data):**
+
 ```
 1. User submits booking form with dates
 2. Parse check_in and check_out timestamps
@@ -218,6 +237,7 @@ The booking views module manages the complete booking lifecycle including availa
 ```
 
 **Availability Filter Flow:**
+
 ```
 1. User submits availability search form
 2. Parse dates from form
@@ -230,6 +250,7 @@ The booking views module manages the complete booking lifecycle including availa
 ```
 
 **Booking Extension Flow:**
+
 ```
 1. User submits extend booking form
 2. Validate booking exists and user owns it
@@ -243,19 +264,25 @@ The booking views module manages the complete booking lifecycle including availa
 ## 5. Data Flow
 
 ### Inputs
+
 **Booking Creation:**
+
 - room_id, check_in, check_out, guest_count, special_requests (POST)
 
 **Availability Check:**
+
 - check_in, check_out dates (POST form)
 
 **Booking Extension:**
+
 - booking_id, new_check_out (POST)
 
 **Review Submission:**
+
 - room_id, text (POST)
 
 ### Processing
+
 - **Date Parsing:** Convert string dates to datetime objects
 - **Conflict Detection:** Query overlapping bookings with status="confirmed"
 - **Pagination:** Divide results into pages of 9 rooms
@@ -263,12 +290,14 @@ The booking views module manages the complete booking lifecycle including availa
 - **Price Calculation:** Delegated to Booking.save() method
 
 ### Outputs
+
 - Booking records with calculated total_price
 - Rendered templates with available rooms
 - Redirects with success/error messages
 - Review records linked to rooms
 
 ### Dependencies
+
 - Booking, Room, Review models
 - AvailabilityForm for availability filtering
 - PrivateBookingForm for booking validation
@@ -280,21 +309,22 @@ The booking views module manages the complete booking lifecycle including availa
 ## 6. Mermaid Diagrams
 
 **Private Booking Flow:**
+
 ```mermaid
 flowchart TD
     A["POST to /book/private/"] --> B["Expire Old Bookings"]
     B --> C{POST Data<br/>Contains room_id?}
-    
+
     C -->|No| D["Show Available Rooms"]
     D --> E["Apply Availability<br/>Filter if Form Data"]
     E --> F["Paginate Results"]
     F --> G["Render Template"]
-    
+
     C -->|Yes| H["Parse Dates"]
     H --> I{Check_out ><br/>Check_in?}
     I -->|No| J["Error Message"]
     J --> K["Redirect"]
-    
+
     I -->|Yes| L["Query Conflicts"]
     L --> M{Conflict<br/>Found?}
     M -->|Yes| J
@@ -305,6 +335,7 @@ flowchart TD
 ```
 
 **Room Detail & Review Flow:**
+
 ```mermaid
 flowchart TD
     A["GET /room/&lt;id&gt;/"] --> B["Expire Bookings"]
@@ -313,7 +344,7 @@ flowchart TD
     D --> E["Check User's<br/>Active Booking"]
     E --> F["Render Template"]
     F --> G["Display Reviews"]
-    
+
     H["POST Review"] --> I["Get Room"]
     I --> J{User has<br/>Checked-in<br/>Booking?}
     J -->|No| K["Error:Must<br/>Check In"]
@@ -327,6 +358,7 @@ flowchart TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid datetime format:** except block logs error, shows generic message
 - **Booking not found:** 404 via get_object_or_404()
 - **Room not found:** 404 via get_object_or_404()
@@ -335,6 +367,7 @@ flowchart TD
 - **No user booking for review:** Error message, no review created
 
 ### Edge Cases
+
 - **Same-day checkout:** Valid (time-based, not date-based)
 - **Overlapping bookings:** Room filtered out from available list
 - **Multiple bookings per user:** Query returns list, filtering handles all
@@ -347,9 +380,11 @@ flowchart TD
 ## 8. Example Usage
 
 ### Booking a Room
+
 **Endpoint:** `POST /book/private/`
 
 **Form Data:**
+
 ```
 room_id=5
 check_in=2024-03-15T15:00
@@ -361,9 +396,11 @@ special_requests=Late checkout preferred
 **Response:** Redirect to `/book/booking/success/` with message
 
 ### Checking Availability
+
 **Endpoint:** `POST /customer/check/availability/`
 
 **Form Data:**
+
 ```
 check_in=2024-03-15
 check_out=2024-03-20
@@ -372,9 +409,11 @@ check_out=2024-03-20
 **Response:** Rendered page with filtered available rooms
 
 ### Extending Booking
+
 **Endpoint:** `POST /book/extend-booking/`
 
 **Form Data:**
+
 ```
 booking_id=42
 new_check_out=2024-03-20T11:00
@@ -383,9 +422,11 @@ new_check_out=2024-03-20T11:00
 **Response:** Redirect to room detail with success/error message
 
 ### Submitting Review
+
 **Endpoint:** `POST /book/submit-review/`
 
 **Form Data:**
+
 ```
 room_id=5
 text=Excellent room, great service!

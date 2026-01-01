@@ -1,6 +1,7 @@
 # Project URLs Configuration Documentation
 
 ## 1. Overview
+
 The main URL configuration routes all HTTP requests to appropriate application views. It serves as the central dispatcher for the Hotel Grand project, directing requests to accounts, booking, menu, and core functionality endpoints.
 
 **Purpose:** Define and route all application URLs to corresponding views and apps.
@@ -8,11 +9,13 @@ The main URL configuration routes all HTTP requests to appropriate application v
 **Responsibility:** Map URL patterns to views, serve static/media files in development, manage authentication routes.
 
 ## 2. File Location
+
 - **Source path:** `hotelgrand/urls.py`
 
 ## 3. Key Components
 
 ### Admin Panel
+
 ```
 Path: admin/
 View: admin.site.urls (Django's built-in admin)
@@ -24,6 +27,7 @@ Authentication: Superuser required
 ---
 
 ### Public Home & Info
+
 ```
 Path: /
 View: core.views.home
@@ -45,6 +49,7 @@ Authentication: Not required
 ---
 
 ### Public Booking Display
+
 ```
 Path: rooms/
 View: core.views.public_booking
@@ -58,6 +63,7 @@ Pagination: 9 rooms per page
 ---
 
 ### Public Menu Display
+
 ```
 Path: menu/
 View: core.views.public_menu
@@ -71,6 +77,7 @@ Pagination: 3 items per page
 ---
 
 ### Authentication Routes
+
 ```
 Path: login/
 View: django.contrib.auth.views.LoginView
@@ -92,6 +99,7 @@ Next Page: 'login'
 ---
 
 ### Booking App Routes
+
 ```
 Path: book/
 Include: booking.urls
@@ -110,6 +118,7 @@ Sub-patterns:
 ---
 
 ### Accounts App Routes
+
 ```
 Path: accounts/
 Include: accounts.urls
@@ -129,6 +138,7 @@ Sub-patterns:
 ---
 
 ### Menu App Routes
+
 ```
 Path: menu/
 Include: menu.urls
@@ -142,12 +152,14 @@ Sub-patterns:
 ---
 
 ### Static & Media Files (Development Only)
+
 ```python
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
 
 **Purpose:** Serve user-uploaded files (profile images, room images) in development
+
 - Media URL path: `/media/`
 - Media root directory: `BASE_DIR/media`
 - Includes:
@@ -162,6 +174,7 @@ if settings.DEBUG:
 ## 4. Execution Flow
 
 **URL Resolution Process:**
+
 ```
 1. User makes HTTP request to /path/
 2. Django URL dispatcher receives request
@@ -175,21 +188,25 @@ if settings.DEBUG:
 **Request Flow Examples:**
 
 **Example 1: Access Home Page**
+
 ```
 GET / → Matches path('', views.home) → core.views.home() → Rendered home.html
 ```
 
 **Example 2: User Login**
+
 ```
 GET /login/ → Matches path('login/', LoginView) → Django LoginView → Rendered login.html
 ```
 
 **Example 3: Book Room**
+
 ```
 POST /book/private/ → Matches include("booking.urls") → booking.urls patterns → booking.views.private_booking()
 ```
 
 **Example 4: Media File (Development)**
+
 ```
 GET /media/profile_images/user123.jpg → Matches static() pattern → Django FileResponse → Image file
 ```
@@ -199,12 +216,14 @@ GET /media/profile_images/user123.jpg → Matches static() pattern → Django Fi
 ## 5. Data Flow
 
 ### Inputs
+
 - HTTP request path
 - Request method (GET, POST, etc.)
 - URL parameters (e.g., `<room_id>`)
 - Query string parameters
 
 ### Processing
+
 - Pattern matching against urlpatterns list
 - URL parameter extraction
 - View function/class selection
@@ -212,12 +231,14 @@ GET /media/profile_images/user123.jpg → Matches static() pattern → Django Fi
 - Decorators applied (login_required, etc.)
 
 ### Outputs
+
 - View function/class response
 - HTTP status code (200, 404, 302, etc.)
 - Response headers
 - Response body (HTML, JSON, redirect)
 
 ### Dependencies
+
 - django.contrib.admin
 - django.contrib.auth views
 - Django URL routing system
@@ -229,10 +250,11 @@ GET /media/profile_images/user123.jpg → Matches static() pattern → Django Fi
 ## 6. Mermaid Diagrams
 
 **URL Routing Map:**
+
 ```mermaid
 graph TD
     A["HTTP Request"] --> B{URL Path}
-    
+
     B -->|/| C["home"]
     B -->|/about/| D["about"]
     B -->|/rooms/| E["public_booking"]
@@ -243,7 +265,7 @@ graph TD
     B -->|/book/...| J["booking.urls"]
     B -->|/accounts/...| K["accounts.urls"]
     B -->|/media/...| L["Static Files"]
-    
+
     C -->|core.views| M["Render home.html"]
     D -->|core.views| N["Render about.html"]
     E -->|core.views| O["Render public_booking.html"]
@@ -252,6 +274,7 @@ graph TD
 ```
 
 **Application Architecture:**
+
 ```mermaid
 graph LR
     A["hotelgrand/urls.py<br/>Main Router"] -->|includes| B["accounts/urls.py"]
@@ -260,17 +283,18 @@ graph LR
     A -->|directs to| E["core/views.py"]
     A -->|directs to| F["Django Auth"]
     A -->|admin| G["Django Admin"]
-    
+
     B -->|functions| H["register<br/>login<br/>edit_profile<br/>..."]
     C -->|functions| I["private_booking<br/>room_detail<br/>extend_booking<br/>..."]
     D -->|functions| J["private_menu<br/>place_order"]
-    
+
     K["User Request"] -->|GET /| A
     K -->|POST /book/private/| A
     K -->|GET /accounts/edit/| A
 ```
 
 **URL Parameter Extraction:**
+
 ```mermaid
 graph TD
     A["GET /book/room/5/"] --> B["URL Pattern:<br/>path('room/&lt;int:room_id&gt;/')"]
@@ -286,6 +310,7 @@ graph TD
 ## 7. Error Handling & Edge Cases
 
 ### Possible Failures
+
 - **Invalid URL:** No matching pattern → 404 Not Found
 - **Missing view function:** ImportError on startup
 - **Trailing slash mismatch:** Depends on APPEND_SLASH setting
@@ -293,6 +318,7 @@ graph TD
 - **Include() without slash:** Pattern matching issues
 
 ### Edge Cases
+
 - **Overlapping patterns:** First match wins (order matters!)
 - **Regex special characters:** Must be escaped in path strings
 - **Very long URLs:** No built-in limit (server dependent)
@@ -306,12 +332,14 @@ graph TD
 ## 8. Example Usage
 
 ### Access Home Page
+
 **URL:** `/`
 **HTTP Method:** GET
 **View:** `core.views.home()`
 **Response:** Rendered home page
 
 ### User Registration
+
 **URL:** `/accounts/register/`
 **HTTP Method:** POST
 **View:** `accounts.views.register()`
@@ -319,6 +347,7 @@ graph TD
 **Response:** JSON success/error
 
 ### Book Private
+
 **URL:** `/book/private/`
 **HTTP Method:** GET/POST
 **View:** `booking.views.private_booking()`
@@ -326,12 +355,14 @@ graph TD
 **Response:** Rendered booking page or redirect
 
 ### View Room Details
+
 **URL:** `/book/room/3/`
 **HTTP Method:** GET
 **View:** `booking.views.room_detail(room_id=3)`
 **Response:** Room details with reviews and images
 
 ### Place Food Order
+
 **URL:** `/menu/place-order/`
 **HTTP Method:** POST
 **View:** `menu.views.place_order()`
@@ -339,6 +370,7 @@ graph TD
 **Response:** Redirect with message
 
 ### Login
+
 **URL:** `/login/`
 **HTTP Method:** GET/POST
 **View:** Django's built-in LoginView
@@ -346,24 +378,28 @@ graph TD
 **Redirect After:** Defined by next parameter or LOGIN_REDIRECT_URL
 
 ### Logout
+
 **URL:** `/logout/`
 **HTTP Method:** GET/POST
 **View:** Django's built-in LogoutView
 **Redirect After:** Login page
 
 ### Admin Interface
+
 **URL:** `/admin/`
 **HTTP Method:** GET/POST
 **View:** Django Admin site
 **Authentication:** Superuser only
 
 ### Media File Access (Development)
+
 **URL:** `/media/profile_images/john_doe.jpg`
 **HTTP Method:** GET
 **Response:** Image file from media/profile_images/
 **Note:** Only in DEBUG=True; use separate server in production
 
 ### Reverse URL Lookup in Code
+
 ```python
 from django.urls import reverse
 
@@ -374,6 +410,7 @@ room_url = reverse('room_detail', args=[5])  # Returns: /book/room/5/
 ```
 
 ### Include URL Patterns
+
 ```python
 # Main urls.py
 from django.urls import path, include
