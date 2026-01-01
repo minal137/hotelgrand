@@ -1,0 +1,115 @@
+<div id="login-modal" class="modal hidden">
+  <div class="modal-content">
+    <button onclick="closeLoginModal()" class="close-btn">×</button>
+    <h2>Login</h2>
+    <form id="login-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <input
+          type="text"
+          id="login-username"
+          name="username"
+          placeholder="Username"
+          required
+        />
+        <div class="error-message" id="login-username-error"></div>
+      </div>
+
+      <div class="form-group password-group">
+        <input
+          type="login-password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <i
+          class="fas fa-eye toggle-password"
+          onclick="togglePassword('login-password', this)"
+        ></i>
+
+        <div class="error-message" id="login-password-error"></div>
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <p class="switch-auth">
+      Don't have an account?
+      <button type="button" onclick="switchToRegister()" class="switch-btn">
+        Register
+      </button>
+    </p>
+  </div>
+</div>
+
+<script>
+  function togglePassword(fieldId, icon) {
+    const input = document.getElementById(fieldId);
+    if (input.type === "password") {
+      input.type = "text";
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    } else {
+      input.type = "password";
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
+    }
+  }
+
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Clear previous errors
+      document
+        .querySelectorAll(".error-message")
+        .forEach((el) => (el.textContent = ""));
+      document
+        .querySelectorAll("input")
+        .forEach((el) => el.classList.remove("input-error"));
+
+      const formData = new FormData(this);
+
+      fetch("{% url 'login' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+        },
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            window.location.href = "/"; // or redirect to dashboard
+          } else {
+            if (data.error.includes("username")) {
+              document.getElementById("login-username-error").textContent =
+                data.error;
+              document
+                .getElementById("login-username")
+                .classList.add("input-error");
+            } else if (data.error.includes("password")) {
+              document.getElementById("login-password-error").textContent =
+                data.error;
+              document
+                .getElementById("login-password")
+                .classList.add("input-error");
+            } else {
+              document.getElementById("login-password-error").textContent =
+                data.error;
+              document
+                .getElementById("login-password")
+                .classList.add("input-error");
+              document
+                .getElementById("login-username")
+                .classList.add("input-error");
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Login failed:", error);
+        });
+    });
+</script>

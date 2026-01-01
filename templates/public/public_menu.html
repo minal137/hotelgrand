@@ -1,0 +1,183 @@
+{%include "shared/navbar.html"%}
+
+<div class="carousel">
+  <div class="slides">
+    <div class="slide active">
+      <img class="menu_img" src="https://i.pinimg.com/736x/93/52/81/935281d0e6eb402f7f6b0c0040a8249b.jpg" alt="">
+      <div class="caption">
+        <div class="caption_head">Pancakes</div> 
+    <div class="caption_subhead">Fluffy pancakes with syrup</div>
+    <button class="caption-btn">Book Now</button>
+    </div>
+    </div>
+    <div class="slide">
+      <img class="menu_img" src="https://i.pinimg.com/736x/65/a8/39/65a8397011807242a0807a34fba70a4e.jpg" alt="">
+      <div class="caption">
+        <div class="caption_head">Burger</div> 
+    <div class="caption_subhead">Beef burger with fries</div>
+    <button class="caption-btn">Order Now</button>
+    </div>
+    </div>
+    <div class="slide">
+      <img class="menu_img" src="https://i.pinimg.com/1200x/1d/e8/b7/1de8b7f68adda0c2c53f4bd5bcd9cafa.jpg" alt="">
+      <div class="caption">
+        <div class="caption_head">Grilled Fish</div> 
+    <div class="caption_subhead">Grilled fish with salad</div>
+    <button class="caption-btn">Order Now</button>
+    </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <span id="prev">&#10094;</span>
+    <span id="next">&#10095;</span>
+  </div>
+
+ <div class="dots">
+    <span class="dot active"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+</div>
+</div>
+
+
+
+ <section class="menu-section">
+    <div class="menu_container">
+      <h1>Hotel Menu</h1>
+      <p class="menu-p">Discover our carefully crafted dishes made with the finest ingredients and culinary expertise</p>
+
+      <!-- Search + Category Buttons -->
+      <div class="top-bar">
+        <input type="text" id="menuSearchInput" placeholder="Search Menu..." />
+        <div class="category-buttons">
+          <button class="category-btn active" onclick="filterMenu('all')">All</button>
+          {% for category in categories %}
+            <button class="category-btn" onclick="filterMenu('{{ category.name|slugify }}')">
+              {{ category.name }}
+            </button>
+          {% endfor %}
+        </div>
+    </div>
+
+      <!-- Menu Grid -->
+      <div class="menu-grid">
+  {% for item in page_obj %}
+    <div class="menu-card category-{{ item.category.name|slugify }}" data-name="{{ item.name|lower }}"> 
+      <div class="menu-img-wrapper">
+      {% if item.image %}
+  <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-img">
+{% elif item.image_url %}
+  <img src="{{ item.image_url }}" alt="{{ item.name }}" class="menu-img">
+{% endif %}
+      </div>
+      <div class="menu-content">
+        <div class="menu-header">
+          <h3 class="menu-title">{{ item.name }}</h3>
+          <p class="menu-price">Rs {{ item.price }}</p>
+        </div>
+        <p class="menu-desc">{{ item.description }}</p>
+        <div class="menu-meta">
+          <p><strong>Estimated Time:</strong> {{ item.estimated_time }} mins</p>
+          <p><strong>Rating:</strong> ⭐ {{ item.average_rating }}</p>
+          <p><strong>Loyalty Points:</strong> {{ item.loyalty_points }}</p>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No menu items available at the moment.</p>
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+  {% endif %}
+
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next »</a>
+  {% endif %}
+</div>
+
+    </div>
+  </section>
+
+  {%include "public/footer.html"%}
+
+<script>
+    // carousel
+
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  let currentIndex = 0;
+
+ function showSlide(index) {
+  const slidesContainer = document.querySelector('.slides');
+  const slideWidth = slides[0].clientWidth;
+  slidesContainer.style.transform = `translateX(-${index * slideWidth}px)`;
+
+  // Update dots
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
+}
+
+  document.getElementById('next').addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    showSlide(currentIndex);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    showSlide(currentIndex);
+  });
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      currentIndex = i;
+      showSlide(currentIndex);
+    });
+  });
+
+  // Optional: Auto-slide
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    showSlide(currentIndex);
+  }, 8000);
+
+
+ // Category Filter
+    function filterMenu(category) {
+  const cards = document.querySelectorAll('.menu-card');
+  const buttons = document.querySelectorAll('.category-btn');
+
+  // Filter items
+  cards.forEach(card => {
+    if (category === 'all') {
+      card.style.display = 'block';
+    } else {
+      card.style.display = card.classList.contains(`category-${category}`) ? 'block' : 'none';
+    }
+  });
+
+  // Update active button
+  buttons.forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.category-btn[onclick="filterMenu('${category}')"]`)?.classList.add('active');
+}
+
+
+    // Search Filter
+    const searchInput = document.getElementById('menuSearchInput');
+    searchInput.addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      const cards = document.querySelectorAll('.menu-card');
+      cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(query) ? 'block' : 'none';
+      });
+    });
+
+</script>

@@ -1,0 +1,225 @@
+{% include "shared/navbar.html" %}
+
+<div class="carousel">
+  <!-- Same carousel as public menu -->
+  <!-- You can reuse your public carousel here -->
+</div>
+
+<section class="menu-section">
+  <div class="menu_container">
+    <h1>Room Service Menu</h1>
+    <p class="menu-p">
+      Welcome, {{ request.user.username }}. Select items to order directly to
+      your room.
+    </p>
+
+    <!-- Search + Category Buttons -->
+    <div class="top-bar">
+      <input type="text" id="menuSearchInput" placeholder="Search Menu..." />
+      <div class="category-buttons">
+        <button class="category-btn active" onclick="filterMenu('all')">
+          All
+        </button>
+        {% for category in categories %}
+        <button
+          class="category-btn"
+          onclick="filterMenu('{{ category.name|slugify }}')"
+        >
+          {{ category.name }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="menu-grid">
+      {% for item in items %}
+      <div
+        class="menu-card category-{{ item.category.name|slugify }}"
+        data-name="{{ item.name|lower }}"
+      >
+        <div class="menu-img-wrapper">
+          {% if item.image %}
+          <img
+            src="{{ item.image.url }}"
+            alt="{{ item.name }}"
+            class="menu-img"
+          />
+          {% elif item.image_url %}
+          <img
+            src="{{ item.image_url }}"
+            alt="{{ item.name }}"
+            class="menu-img"
+          />
+          {% else %}
+          <img
+            src="/static/images/default-menu.jpg"
+            alt="No image"
+            class="menu-img"
+          />
+          {% endif %}
+        </div>
+        <div class="menu-content">
+          <div class="menu-header">
+            <h3 class="menu-title">{{ item.name }}</h3>
+            <p class="menu-price">Rs {{ item.price }}</p>
+          </div>
+          <p class="menu-desc">{{ item.description }}</p>
+          <div class="menu-meta">
+            <p>
+              <strong>Estimated Time:</strong> {{ item.estimated_time }} mins
+            </p>
+            <p><strong>Rating:</strong> ⭐ {{ item.average_rating }}</p>
+            <p><strong>Loyalty Points:</strong> {{ item.loyalty_points }}</p>
+          </div>
+          {% if item.image %} {% elif item.image_url %} {% set image_src =
+          item.image_url %} ///// {% else %} {% set image_src =
+          '/static/images/default-menu.jpg' %} /// {% endif %}
+
+          <button
+            class="caption-btn"
+            onclick="openOrderModal({{ item.id }}, '{{ item.name }}', {{ item.price }}, {{ item.estimated_time }}, '{{ image_src }}')"
+          >
+            Order
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Order History -->
+    <h2>🍽️ Your Food History</h2>
+    <div class="order-history">
+      {% for order in orders %}
+      <div class="order-card">
+        <p>
+          <strong>{{ order.item.name }}</strong> - Rs {{ order.item.price }} ×
+          {{ order.quantity }} = Rs {{ order.item.price|multiply:order.quantity
+          }}
+        </p>
+        <p>Status: {{ order.status }}</p>
+        {% if order.status == "delivered" and not order.rating %}
+        <form method="post" action="{% url 'rate_food' %}">
+          {% csrf_token %}
+          <input type="hidden" name="order_id" value="{{ order.id }}" />
+          <label for="rating">Rate this dish:</label>
+          <select name="rating">
+            <option value="1">⭐</option>
+            <option value="2">⭐⭐</option>
+            <option value="3">⭐⭐⭐</option>
+            <option value="4">⭐⭐⭐⭐</option>
+            <option value="5">⭐⭐⭐⭐⭐</option>
+          </select>
+          <button type="submit">Submit</button>
+        </form>
+        {% elif order.rating %}
+        <p>Rated: ⭐ {{ order.rating }}</p>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p>No previous orders yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Order Modal -->
+<div id="orderModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeOrderModal()">&times;</span>
+    <img id="modalImage" src="" alt="Menu Image" class="modal-img" />
+    <h3 id="modalTitle"></h3>
+    <p>Price per item: Rs <span id="modalPrice"></span></p>
+    <label for="quantity">Quantity:</label>
+    <input
+      type="number"
+      id="quantity"
+      value="1"
+      min="1"
+      onchange="updateTotal()"
+    />
+    <label for="room">Deliver to Room:</label>
+    <select id="room">
+      {% for booking in active_bookings %}
+      <option value="{{ booking.room.id }}">{{ booking.room.name }}</option>
+      {% endfor %}
+    </select>
+    <p>Total Price: Rs <span id="totalPrice"></span></p>
+    <p>Estimated Time: <span id="totalTime"></span> mins</p>
+    <form method="post" action="{% url 'place_order' %}">
+      {% csrf_token %}
+      <input type="hidden" name="item_id" id="modalItemId" />
+      <input type="hidden" name="quantity" id="modalQuantity" />
+      <input type="hidden" name="room_id" id="modalRoomId" />
+      <button type="submit">Confirm Order</button>
+    </form>
+  </div>
+</div>
+
+{% include "public/footer.html" %}
+
+<script>
+  function openOrderModal(id, name, price, time, imageUrl) {
+    document.getElementById("orderModal").style.display = "block";
+    document.getElementById("modalTitle").innerText = name;
+    document.getElementById("modalPrice").innerText = price;
+    document.getElementById("modalImage").src = imageUrl;
+    document.getElementById("modalItemId").value = id;
+    document.getElementById("quantity").value = 1;
+    updateTotal(price, time);
+  }
+
+  function closeOrderModal() {
+    document.getElementById("orderModal").style.display = "none";
+  }
+
+  function updateTotal(price = null, time = null) {
+    const qty = parseInt(document.getElementById("quantity").value);
+    const basePrice =
+      price || parseInt(document.getElementById("modalPrice").innerText);
+    const baseTime =
+      time || parseInt(document.getElementById("totalTime").innerText);
+    document.getElementById("totalPrice").innerText = basePrice * qty;
+    document.getElementById("totalTime").innerText = baseTime * qty;
+    document.getElementById("modalQuantity").value = qty;
+    document.getElementById("modalRoomId").value =
+      document.getElementById("room").value;
+  }
+
+  // Search + Category Filter (same as public)
+</script>
+
+<style>
+  .modal {
+    display: none;
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    width: 400px;
+  }
+  .modal-img {
+    height: 200px;
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  .order-history {
+    margin-top: 40px;
+  }
+  .order-card {
+    background: #f9f9f9;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+  }
+</style>

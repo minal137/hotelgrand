@@ -1,0 +1,411 @@
+{% load static %} {% include "shared/navbar.html" %}
+
+<div class="profile-layout">
+  <!-- 🔹 Left Side: Profile Info -->
+  <div class="profile-left">
+    <div class="avatar-wrapper">
+        {% if user.userprofile.profile_image %}
+        <img
+          src="{{ user.userprofile.profile_image.url }}"
+          alt="Profile Photo"
+          class="avatar"
+        />
+        {% else %}
+        <img
+          src="{% static 'images/default-avatar.png' %}"
+          alt="Default Profile"
+          class="avatar"
+        />
+        {% endif %}
+        <button class="avatar-edit-btn" onclick="openEditModal('photo')">
+          Change Photo
+          <i class="fa-solid fa-camera"></i>
+        </button>
+        <h2 class="username">{{ user.username }}</h2>
+      </div>
+    </div>
+    
+
+    <!-- 🔹 Right Side: Completion Circle -->
+    <div class="profile-right">
+      <h4>Profile Completion</h4>
+      <div class="completion-circle">
+        <svg width="120" height="120">
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            stroke="#eee"
+            stroke-width="10"
+            fill="none"
+          />
+          <circle
+            id="progress-ring"
+            cx="60"
+            cy="60"
+            r="50"
+            stroke="#00bcd4"
+            stroke-width="10"
+            fill="none"
+            stroke-dasharray="314"
+            stroke-dashoffset="314"
+          />
+          <text
+            x="50%"
+            y="55%"
+            text-anchor="middle"
+            fill="#333"
+            font-size="18px"
+            font-weight="bold"
+            transform="rotate(90, 60, 60)"
+          >
+            0%
+          </text>
+        </svg>
+      </div>
+      <ul id="completion-checklist" class="completion-checklist">
+        <!-- Items will be injected dynamically -->
+      </ul>
+    </div>
+  </div>
+
+  <div class="profile-header">
+      <section class="personal-details">
+        <h3>Edit Your Profile</h3>
+
+
+        <div class="detail-item">
+        <div class="personal-info-header">
+          <div>
+          <i class="fa-solid fa-user"></i>
+          <span>User Name</span>
+          </div>
+          <button class="edit-btn" onclick="openEditModal('username')">
+            Edit
+            <i class="fa-solid fa-arrow-right fa-fade"></i></button>
+        </div>
+        <h2>Name:{{ user.username }}</h2>
+        </div>
+
+        <div class="detail-item">
+        <div class="personal-info-header">
+          <div>
+          <i class="fa-solid fa-envelope"></i>
+          <span>Email</span>
+          </div>
+          <button class="edit-btn" onclick="openEditModal('email')">
+            Edit
+            <i class="fa-solid fa-arrow-right fa-fade"></i></button>
+        </div>
+        <h2>Email:{{ user.email }}</h2>
+        </div>
+
+
+         <div class="detail-item">
+        <div class="personal-info-header">
+          <div>
+          <i class="fa-solid fa-key"></i>
+          <span>Password</span>
+          </div>
+          <button class="edit-btn" onclick="openEditModal('password')">
+            Change Password
+            <i class="fa-solid fa-arrow-right fa-fade"></i></button>
+        </div>
+        </div>
+
+
+        <div class="detail-item">
+        <div class="personal-info-header">
+          <div>
+          <i class="fa-solid fa-id-card" style="color: #000000"></i>
+          <span>User Info</span>
+          </div>
+          <button class="edit-btn" onclick="openEditModal('details')">
+            Edit
+            <i class="fa-solid fa-arrow-right fa-fade"></i>
+        </div>
+        <h2><strong>Location:</strong> {{ user.userprofile.address }}</h2>
+        <h2><strong>Phone:</strong> {{ user.userprofile.phone }}</h2>
+        <h2><strong>Birthdate:</strong> {{ user.userprofile.dob|date:"F j, Y" }}</h2>
+        </div>
+
+        
+      </section>
+    </div>
+
+  <!-- 🔧 Modal -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeEditModal()">×</button>
+      <h2 id="modal-title">Edit Your Profile</h2>
+      <form id="edit-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id="edit-fields"></div>
+        <button type="submit" class="save-btn">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  {% include "public/footer.html" %}
+
+  <script>
+    
+    document.addEventListener("DOMContentLoaded", function () {
+      const modal = document.getElementById("edit-modal");
+      const form = document.getElementById("edit-form");
+      const fields = document.getElementById("edit-fields");
+      const title = document.getElementById("modal-title");
+
+      // 🔍 Validate fields before submission
+function validateForm() {
+  const errors = [];
+
+  const username = form.querySelector('[name="username"]');
+  if (username && username.value.trim().length < 3) {
+    errors.push("Username must be at least 3 characters.");
+    markInvalid(username, "Username must be at least 3 characters.");
+  }
+
+  const email = form.querySelector('[name="email"]');
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errors.push("Invalid email format.");
+    markInvalid(email, "Invalid email format.");
+  }
+
+  const phone = form.querySelector('[name="phone"]');
+  if (phone && !/^9\d{9}$/.test(phone.value)) {
+    errors.push("Phone must start with 9 and be 9 digits.");
+    markInvalid(phone, "Phone must start with 9 and be 9 digits.");
+  }
+  
+
+  const dob = form.querySelector('[name="dob"]');
+  if (dob) {
+    const birthDate = new Date(dob.value);
+    const today = new Date();
+    if (birthDate > today) {
+      errors.push("Birthdate cannot be in the future.");
+      markInvalid(dob, "Birthdate cannot be in the future.");
+    }
+  }
+
+  return errors;  
+}
+
+function markInvalid(input, message) {
+  input.classList.add("invalid");
+  const errorSpan = form.querySelector(`[data-error-for="${input.name}"]`);
+  if (errorSpan) errorSpan.textContent = message;
+}
+      // 🛠 Open modal with appropriate fields
+
+      function openEditModal(type) {
+        let endpoint = "";
+        let fieldHTML = "";
+
+        if (type === "photo") {
+          title.textContent = "Change Profile Photo";
+          endpoint = "/accounts/update/photo/";
+          fieldHTML = `
+        <div class="form-group">
+          <input type="file" name="profile_image" accept="image/*" required />
+        </div>
+      `;
+        } else if (type === "username") {
+          title.textContent = "Change Username";
+          endpoint = "/accounts/update/username/";
+          fieldHTML = `
+        <div class="form-group">
+          <input type="text" name="username" placeholder="New Username" required />
+          <span class="error-message" data-error-for="username"></span>
+        </div>
+      `;
+        } else if (type === "email") {
+          title.textContent = "Change Email";
+          endpoint = "/accounts/update/email/";
+          fieldHTML = `
+        <div class="form-group">
+          <input type="email" name="email" placeholder="New Email" required />
+          <span class="error-message" data-error-for="email"></span>
+        </div>
+      `;
+        } else if (type === "password") {
+          title.textContent = "Change Password";
+          endpoint = "/accounts/update/password/";
+          fieldHTML = `
+        <div class="form-group password-field">
+          <input type="password" name="old_password" placeholder="Current Password" required />
+          <button type="button" class="edit-toggle-password"><i class="fa-solid fa-eye"></i></button>
+        </div>
+        <div class="form-group password-field">
+          <input type="password" name="new_password1" placeholder="New Password" required />
+          <button type="button" class="edit-toggle-password"><i class="fa-solid fa-eye"></i></button>
+        </div>
+        <div class="form-group password-field">
+          <input type="password" name="new_password2" placeholder="Confirm New Password" required />
+          <button type="button" class="edit-toggle-password"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      `;
+        } else if (type === "details") {
+          title.textContent = "Update Personal Info";
+          endpoint = "/accounts/update/details/";
+          fieldHTML = `
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" name="dob" id="dob" value="{{ user.userprofile.dob|date:'Y-m-d' }}" required />
+          <span class="error-message" data-error-for="dob"></span>
+        </div>
+        
+
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="e.g. +977-9800000000" value="{{ user.userprofile.phone }}" required />
+          <span class="error-message" data-error-for="phone"></span>
+        </div>
+        
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" name="address" placeholder="Your address" value="{{ user.userprofile.address }}" required />
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="text" id="age" readonly />
+        </div>
+      `;
+        }
+
+        form.action = endpoint;
+        fields.innerHTML = fieldHTML;
+        modal.classList.remove("hidden");
+        attachSubmitHandler();
+      }
+
+      function closeEditModal() {
+        modal.classList.add("hidden");
+        form.reset();
+      }
+
+      function attachSubmitHandler() {
+        form.onsubmit = function (e) {
+  e.preventDefault();
+
+  const validationErrors = validateForm();
+  if (validationErrors.length > 0) {
+    return;
+  }
+
+  const formData = new FormData(form);
+  const endpoint = form.action;
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+    },
+    body: formData,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        closeEditModal();
+        location.reload();
+      } else {
+        alert("❌ Error: " + data.error);
+      }
+    })
+    .catch((err) => {
+      console.error("Update failed:", err);
+      alert("❌ Something went wrong. Please try again.");
+    });
+};
+}
+
+      window.openEditModal = openEditModal;
+      window.closeEditModal = closeEditModal;
+
+      // 👁 Toggle password visibility
+      document.addEventListener("click", function (e) {
+        const toggleBtn = e.target.closest(".edit-toggle-password");
+        if (toggleBtn) {
+          const formGroup = toggleBtn.closest(".form-group");
+          const input = formGroup.querySelector("input");
+          const icon = toggleBtn.querySelector("i");
+
+          if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+          } else {
+            input.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+          }
+        }
+      });
+
+      // 🎂 Auto-calculate age
+      document.addEventListener("input", function (e) {
+        if (e.target.id === "dob") {
+          const dob = new Date(e.target.value);
+          const today = new Date();
+          let age = today.getFullYear() - dob.getFullYear();
+          const m = today.getMonth() - dob.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+          }
+          document.getElementById("age").value = age > 0 ? age : "";
+        }
+
+        updateCompletionCircle();
+      });
+
+      // 🟢 Completion Circle Logic
+      function updateCompletionCircle() {
+        const fields = [
+          { label: "Username", value: "{{ user.username }}" },
+          { label: "Email", value: "{{ user.email }}" },
+          {
+            label: "Profile Photo",
+            value: "{% if user.userprofile.profile_image %}{{ user.userprofile.profile_image.url }}{% else %}No image uploaded{% endif %}",
+          },
+          { label: "Date of Birth", value: "{{ user.userprofile.dob }}" },
+          { label: "Phone Number", value: "{{ user.userprofile.phone }}" },
+          { label: "Address", value: "{{ user.userprofile.address }}" },
+        ];
+
+        let filled = 0;
+        const checklist = document.getElementById("completion-checklist");
+        if (checklist) checklist.innerHTML = "";
+
+        fields.forEach((field) => {
+          const isFilled =
+            field.value &&
+            field.value.trim() !== "" &&
+            !field.value.includes("default-avatar");
+
+          if (isFilled) filled++;
+
+          if (checklist) {
+            const li = document.createElement("li");
+            li.textContent = field.label;
+            li.className = isFilled ? "complete" : "incomplete";
+            checklist.appendChild(li);
+          }
+        });
+
+        const percent = Math.round((filled / fields.length) * 100);
+        const ring = document.getElementById("progress-ring");
+        if (ring) {
+          const offset = 314 - (314 * percent) / 100;
+          ring.style.strokeDashoffset = offset;
+
+          const text = ring.nextElementSibling;
+          if (text && text.tagName === "text") {
+            text.textContent = `${percent}%`;
+          }
+        }
+      }
+
+      // 🔁 Initialize circle on page load
+      updateCompletionCircle();
+    });
+  </script>
+</div>

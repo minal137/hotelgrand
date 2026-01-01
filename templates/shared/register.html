@@ -1,0 +1,135 @@
+<div id="register-modal" class="modal hidden">
+  <div class="modal-content">
+    <button onclick="closeRegisterModal()" class="close-btn">×</button>
+    <h2>Register</h2>
+    <form id="register-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Username"
+          required
+        />
+        <div class="error-message" id="username-error"></div>
+      </div>
+
+      <div class="form-group">
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Email"
+          required
+        />
+        <div class="error-message" id="email-error"></div>
+      </div>
+
+      <div class="form-group password-group">
+        <input
+          type="password"
+          id="password1"
+          name="password1"
+          placeholder="Password"
+          required
+        />
+        <i
+          class="fas fa-eye toggle-password"
+          onclick="togglePassword('password1', this)"
+        ></i>
+
+        <div class="error-message" id="password1-error"></div>
+      </div>
+
+      <div class="form-group password-group">
+        <input
+          type="password"
+          id="password2"
+          name="password2"
+          placeholder="Confirm Password"
+          required
+        />
+        <i
+          class="fas fa-eye toggle-password"
+          onclick="togglePassword('password2', this)"
+        ></i>
+
+        <div class="error-message" id="password2-error"></div>
+      </div>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <p class="switch-auth">
+      Already have an account?
+      <button type="button" onclick="switchToLogin()" class="switch-btn">
+        Login
+      </button>
+    </p>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("register-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Clear previous errors
+      document
+        .querySelectorAll(".error-message")
+        .forEach((el) => (el.textContent = ""));
+      document
+        .querySelectorAll("input")
+        .forEach((el) => el.classList.remove("input-error"));
+
+      const formData = new FormData(this);
+
+      fetch("{% url 'register' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+        },
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            closeRegisterModal();
+            showAuthModal();
+          } else {
+            // Handle field-specific errors
+            if (data.error.includes("Username")) {
+              document.getElementById("username-error").textContent =
+                data.error;
+              document.getElementById("username").classList.add("input-error");
+            } else if (data.error.includes("Email")) {
+              document.getElementById("email-error").textContent = data.error;
+              document.getElementById("email").classList.add("input-error");
+            } else if (data.error.includes("Passwords")) {
+              document.getElementById("password1-error").textContent =
+                data.error;
+              document.getElementById("password1").classList.add("input-error");
+              document.getElementById("password2").classList.add("input-error");
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Registration failed:", error);
+        });
+    });
+
+  function togglePassword(fieldId, icon) {
+    const input = document.getElementById(fieldId);
+    if (input.type === "password") {
+      input.type = "text";
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    } else {
+      input.type = "password";
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
+    }
+  }
+</script>

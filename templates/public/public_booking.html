@@ -1,0 +1,109 @@
+{% include "shared/navbar.html" %}
+
+<section class="booking-section">
+  <div class="menu_container">
+    <h1>Book a Room</h1>
+    <p class="menu-p">Explore our rooms and find your perfect stay</p>
+
+    <!-- Inline Booking Form -->
+    <section class="booking">
+      <div class="section__container booking__container">
+        <form action="/">
+          <div class="input__group">
+            <label for="arrival">Arrival Date</label>
+            <input
+              type="text"
+              placeholder="Your Arrival Date"
+              name="arrival"
+              onfocus="(this.type='date')"
+              onblur="if(!this.value) this.type='text'"
+            />
+          </div>
+          <div class="input__group">
+            <label for="departure">Departure Date</label>
+            <input
+              type="text"
+              placeholder="Your Departure Date"
+              name="departure"
+              onfocus="(this.type='date')"
+              onblur="if(!this.value) this.type='text'"
+            />
+          </div>
+          <div class="input__group">
+            <label for="guests">Guests</label>
+            <input type="number" placeholder="No Of Guests" name="guests" />
+          </div>
+          <button class="btn">Check Availability</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Search Bar -->
+    <input type="text" id="roomSearchInput" placeholder="Search Rooms..." />
+
+    <!-- Room Grid -->
+    <div class="menu-grid">
+      {% for room in page_obj %}
+      <div class="menu-card" data-name="{{ room.name|lower }}">
+        <div class="menu-img-wrapper">
+          {% if room.image %}
+          <img
+            src="{{ room.image.url }}"
+            alt="{{ room.name }}"
+            class="menu-img"
+          />
+          {% elif room.image_url %}
+          <img
+            src="{{ room.image_url }}"
+            alt="{{ room.name }}"
+            class="menu-img"
+          />
+          {% endif %}
+        </div>
+
+        <div class="menu-content">
+          <div class="menu-header">
+            <h3 class="menu-title">{{ room.name }}</h3>
+            <p class="menu-price">Rs {{ room.price }} / night</p>
+          </div>
+          <p class="menu-desc">{{ room.description }}</p>
+          <div class="menu-meta">
+            <p><strong>Capacity:</strong> {{ room.capacity }} guests</p>
+            <p><strong>Amenities:</strong> {{ room.amenities }}</p>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p>No rooms available at the moment.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+      {% endif %}
+      <span
+        >Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span
+      >
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next »</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% include "public/footer.html" %}
+
+<!-- Search Script -->
+<script>
+  const searchInput = document.getElementById("roomSearchInput");
+  searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase();
+    const cards = document.querySelectorAll(".menu-card");
+    cards.forEach((card) => {
+      const name = card.getAttribute("data-name");
+      card.style.display = name.includes(query) ? "block" : "none";
+    });
+  });
+</script>

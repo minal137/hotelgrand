@@ -1,0 +1,54 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<body>
+  <div id="parallax">
+    <h1 class="animated-heading">
+      Welcome <br />
+      to the
+      <span class="forest-word">
+        <span class="hover"><span>H</span></span>
+        <span class="hover"><span>O</span></span>
+        <span class="hover"><span>T</span></span>
+        <span class="hover"><span>E</span></span>
+        <span class="hover"><span>L</span></span>
+      </span>
+    </h1>
+    <p style="padding-right: 10%">
+      Experience luxury and comfort like never before at our exquisite hotel.
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      const elem = document.querySelector("#parallax");
+      const basePos = [
+        { x: 7, y: 95 }, // Hotel
+        { x: -5, y: 70 }, // Clouds
+        { x: -25, y: 100 }, // Grass
+      ];
+
+      if (window.innerWidth > 768) {
+        document.addEventListener("mousemove", parallax);
+      }
+
+      function parallax(e) {
+        let _w = window.innerWidth / 2;
+        let _h = window.innerHeight / 2;
+        let _mouseX = e.clientX - _w;
+        let _mouseY = e.clientY - _h;
+
+        let depth1 = `${basePos[0].x + _mouseX * 0.01}% ${
+          basePos[0].y + _mouseY * 0.009
+        }%`;
+        let depth2 = `${basePos[1].x + _mouseX * 0.03}% ${
+          basePos[1].y + _mouseY * 0.01
+        }%`;
+        let depth3 = `${basePos[2].x + _mouseX * 0.01}% ${
+          basePos[2].y + _mouseY * 0.001
+        }%`;
+
+        elem.style.backgroundPosition = `${depth1}, ${depth2}, ${depth3}`;
+      }
+    })();
+  </script>
+</body>

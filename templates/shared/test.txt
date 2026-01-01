@@ -1,0 +1,91 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap"
+  rel="stylesheet"
+/>
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <i class="fas fa-hotel"></i>
+      <span>Grand Hotel</span>
+    </div>
+    <ul class="nav-menu">
+      {% if user.is_authenticated %}
+      <li>
+        {% if user.role == 'worker' %}
+        <a href="{% url 'accounts_worker_dashboard' %}" class="nav-link">
+          User
+        </a>
+        {% elif user.role == 'customer' %}
+        <a href="{% url 'accounts_customer_dashboard' %}" class="nav-link">
+          User
+        </a>
+        {% elif user.role == 'admin' %}
+        <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
+        {% else %}
+        <a href="#" class="nav-link">Dashboard</a>
+        {% endif %}
+      </li>
+      {% endif %}
+      <li><a href="{% url 'home' %}" class="nav-link">Home</a></li>
+      <li><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
+      <li><a href="{% url 'public_menu' %}" class="nav-link">Menu</a></li>
+      <li>
+        <a href="{% url 'public_booking' %}" class="nav-link">Book Room</a>
+      </li>
+      {% if user.is_authenticated %} {% else %}
+      <li>
+        <button class="login-btn" onclick="showAuthModal()">Login</button>
+      </li>
+      {% endif %} {% if user.is_authenticated %}
+      <li class="nav-profile">
+        <div class="profile-wrapper" onclick="toggleProfilePopup()">
+          <img
+            src="{% if user.userprofile.profile_image %}{{ user.userprofile.profile_image.url }}{% else %}/static/images/default-avatar.png{% endif %}"
+            alt="Profile"
+            class="profile-img"
+          />
+          <span class="profile-name">{{ user.username }}</span>
+        </div>
+        <div id="profile-popup" class="profile-popup hidden">
+          <a href="{% url 'edit_profile' %}">Edit Profile</a>
+          <a href="{% url 'accounts_customer_dashboard' %}">Dashboard</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+          </form>
+        </div>
+      </li>
+      {% endif %}
+    </ul>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const hamburger = document.querySelector(".hamburger");
+  const navMenu = document.querySelector(".nav-menu");
+
+  hamburger.addEventListener("click", () => {
+    navMenu.classList.toggle("active");
+  });
+
+  function toggleProfilePopup() {
+    document.getElementById("profile-popup").classList.toggle("hidden");
+  }
+
+  function showAuthModal() {
+    alert("Login modal triggered");
+  }
+</script>

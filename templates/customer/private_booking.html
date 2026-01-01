@@ -1,0 +1,238 @@
+{% include "shared/navbar.html" %}
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+<section class="booking-section">
+  <div class="menu_container">
+    <h1>Book a Room</h1>
+    <p class="menu-p">
+      Welcome back, {{ user.username }}! Choose your room and confirm your stay.
+    </p>
+
+    <!-- Inline Booking Form -->
+    <section class="booking">
+      <div class="section__container booking__container">
+        <form method="post">
+          {% csrf_token %}
+          <div class="input__group">
+            <label for="check_in">Check-In Date</label>
+            {{ form.check_in }}
+          </div>
+          <div class="input__group">
+            <label for="check_out">Check-Out Date</label>
+            {{ form.check_out }}
+          </div>
+          <button class="btn">Check Availability</button>
+          <button type="submit" name="clear" class="btn btn-secondary">
+            Clear Dates
+          </button>
+        </form>
+
+        {% if available_rooms is not None %} {% if available_rooms %} {% else %}
+        <p class="error">❌ Room is not available for the selected dates.</p>
+        {% endif %} {% endif %}
+      </div>
+    </section>
+
+    <!-- Search Bar -->
+    <input type="text" id="roomSearchInput" placeholder="Search Rooms..." />
+
+    <!-- Room Grid -->
+    <div class="menu-grid">
+      {% for room in page_obj %}
+      <div
+        class="menu-card"
+        id="room-{{ room.id }}"
+        data-name="{{ room.name|lower }}"
+        onclick="openModal({{ room.id }})"
+      >
+        <div class="menu-img-wrapper">
+          <div class="swiper" id="swiper-{{ room.id }}">
+            <div class="swiper-wrapper">
+              {% for image in room.images.all %}
+              <!-- /////////////////////// /////// -->
+              {% with image.get_image_source as src %} {% if src %}
+              <div class="swiper-slide">
+                {% if image.link_url %}
+                <a href="{{ image.link_url }}" target="_blank">
+                  <img
+                    src="{{ src }}"
+                    alt="{{ image.caption|default:room.name }}"
+                  />
+                </a>
+                {% else %}
+                <img
+                  src="{{ src }}"
+                  alt="{{ image.caption|default:room.name }}"
+                />
+                {% endif %}
+              </div>
+              {% endif %} {% endwith %} {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="menu-content">
+          <div class="menu-header">
+            <a href="{% url 'room_detail' room.id %}">
+              <h3 class="menu-title">{{ room.name }}</h3>
+            </a>
+            <p class="menu-price">Rs {{ room.price }} / night</p>
+          </div>
+          <p class="menu-desc">{{ room.description }}</p>
+          <div class="menu-meta">
+            <p><strong>Capacity:</strong> {{ room.capacity }} guests</p>
+            <p><strong>Amenities:</strong> {{ room.amenities }}</p>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p>No rooms available for the selected dates.</p>
+      {% endfor %}
+    </div>
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+      {% endif %}
+      <span
+        >Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span
+      >
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next »</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% if form.errors %}
+<div class="form-errors">
+  {% for error in form.non_field_errors %}
+  <p class="error">{{ error }}</p>
+  {% endfor %}
+</div>
+{% endif %} {% include "public/footer.html" %}
+
+<div id="roomModal" class="modal hidden">
+  <div class="modal-content-private">
+    <span class="close-btn1" onclick="closeModal()">×</span>
+    <div id="modal-body">
+      <!-- Dynamic content will be injected here -->
+    </div>
+  </div>
+</div>
+
+<!-- Search Script -->
+<script>
+  const searchInput = document.getElementById("roomSearchInput");
+  searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase();
+    const cards = document.querySelectorAll(".menu-card");
+    cards.forEach((card) => {
+      const name = card.getAttribute("data-name");
+      card.style.display = name.includes(query) ? "block" : "none";
+    });
+  });
+
+  function clearForm() {
+    document.querySelector("input[name='check_in']").value = "";
+    document.querySelector("input[name='check_out']").value = "";
+  }
+
+  document.querySelectorAll(".swiper").forEach((el) => {
+    new Swiper(el, {
+      loop: true,
+      autoplay: { delay: 3000 },
+      slidesPerView: 1,
+      spaceBetween: 10,
+      pagination: { el: ".swiper-pagination", clickable: true },
+    });
+  });
+
+  function openModal(roomId) {
+    const modal = document.getElementById("roomModal");
+    const body = document.getElementById("modal-body");
+    const roomCard = document.querySelector(`#room-${roomId}`);
+    const roomPrice = parseFloat(
+      roomCard.querySelector(".menu-price").innerText.split(" ")[1]
+    );
+
+    const content = roomCard.querySelector(".menu-content").innerHTML;
+    const images = roomCard.querySelector(".menu-img-wrapper").innerHTML;
+    const swiperWrapper = roomCard.querySelector(".swiper-wrapper").outerHTML;
+
+    body.innerHTML = `
+    <h2>${roomCard.querySelector(".menu-title").innerText}</h2>
+    <div class="swiper" id="modal-swiper-${roomId}">
+     ${swiperWrapper}
+    <div class="swiper-pagination"></div> <!-- ✅ Add pagination container -->
+  </div>
+
+    <div class="modal-section">${content}</div>
+
+
+    <form method="post" action="/book/book/private/">
+  <input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}" />
+  <input type="hidden" name="room_id" value="${roomId}" />
+  <label>Check-In:</label>
+<input type="datetime-local" name="check_in" required onchange="updatePrice({{ room.price }}, 'daily')" />
+
+<label>Check-Out:</label>
+<input type="datetime-local" name="check_out" required onchange="updatePrice({{ room.price }}, 'daily')"/>
+  <label>Guests:</label>
+  <input type="number" name="guest_count" id="guestCount" min="1" value="1" onchange="updatePrice({{ room.price }}, 'daily')"" />
+  <p id="priceDisplay">Total: Rs ${roomPrice}</p>
+
+  <label>Special Requests:</label>
+  <textarea name="special_requests" rows="3"></textarea>
+  <button type="submit">Book Now</button>
+</form>
+
+  `;
+
+    modal.classList.remove("hidden");
+
+    // ✅ Re-initialize Swiper for modal
+    new Swiper(`#modal-swiper-${roomId}`, {
+      loop: true,
+      autoplay: { delay: 3000 },
+      slidesPerView: 1,
+      spaceBetween: 10,
+      pagination: { el: ".swiper-pagination", clickable: true },
+    });
+  }
+  function closeModal() {
+    document.getElementById("roomModal").classList.add("hidden");
+  }
+
+  function updatePrice(pricePerUnit, unitType) {
+    const guestCount = parseInt(document.getElementById("guestCount").value);
+    const checkIn = new Date(document.querySelector("[name='check_in']").value);
+    const checkOut = new Date(
+      document.querySelector("[name='check_out']").value
+    );
+
+    let duration = 1;
+    if (unitType === "daily") {
+      duration = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    } else if (unitType === "hourly") {
+      duration = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60));
+    }
+
+    const total = pricePerUnit * guestCount * duration;
+    document.getElementById("priceDisplay").innerText = `Total: Rs ${total}`;
+  }
+
+  function getCSRFToken() {
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const trimmed = cookie.trim();
+      if (trimmed.startsWith(name + "=")) {
+        return trimmed.substring(name.length + 1);
+      }
+    }
+    return "";
+  }
+</script>

@@ -1,0 +1,480 @@
+{% include "shared/navbar.html" %}
+
+<a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="back-btn-outline"
+  >← Back</a
+>
+
+<section class="room-detail-container">
+  <div class="room-main">
+    <!-- 🖼️ Image Carousel -->
+    <div class="room-image-carousel">
+      <div class="swiper" id="room-swiper">
+        <div class="swiper-wrapper">
+          {% for image in room.images.all %}
+          <!-- ///////////////////////////// -->
+          {% with src=image.get_image_source %}
+          <!-- / -->
+          {% if src %}
+          <div class="swiper-slide">
+            <img src="{{ src }}" alt="{{ image.caption|default:room.name }}" />
+          </div>
+          {% endif %}
+          <!-- / -->
+          {% endwith %}
+          <!-- / -->
+          {% endfor %}
+        </div>
+        <div class="swiper-pagination"></div>
+      </div>
+    </div>
+    {% if existing_booking %}
+    <div class="booking-status">
+      <p><strong>Status:</strong> {{ existing_booking.status|title }}</p>
+      {% if existing_booking.status == "checked_in" %}
+      <p class="status-confirmed">✅ You are checked in.</p>
+      {% elif existing_booking.status == "confirmed" %}
+      <p class="status-pending">
+        ⏳ Your booking is confirmed. Please check in at the desk.
+      </p>
+      {% elif existing_booking.status == "completed" %}
+      <p class="status-completed">✔️ Your stay is completed.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 🏨 Room Info -->
+    <div class="room-meta">
+      <h1>{{ room.name }}</h1>
+      <ul class="room-specs">
+        <li>{{ room.bedrooms }} Bedroom</li>
+        <li>{{ room.bathrooms }} Bathroom</li>
+        <li>{{ room.size }} ft²</li>
+        <li>{{ room.security_level }}</li>
+      </ul>
+      <p class="room-price">Starts from Rs {{ room.price }}</p>
+    </div>
+
+    <!-- 📄 Description -->
+    <div class="room-description">
+      <p>{{ room.description }}</p>
+    </div>
+    {% if existing_booking %}
+    <!-- ✅ Booking Summary -->
+    <div class="booking-summary">
+      <h3>✅ Booking Confirmed</h3>
+      <p><strong>Check-in:</strong> {{ existing_booking.check_in }}</p>
+      <p><strong>Check-out:</strong> {{ existing_booking.check_out }}</p>
+      <p><strong>Guests:</strong> {{ existing_booking.guest_count }}</p>
+      <p><strong>Total Price:</strong> Rs {{ existing_booking.total_price }}</p>
+      <!-- Future: Add time extension, guest update, or menu access -->
+    </div>
+    {% if existing_booking %}
+    <div class="action-buttons">
+      <button type="button" class="btn btn-primary" onclick="openRebookModal()">
+        Book Again
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="openExtensionModal()"
+      >
+        Add Time
+      </button>
+    </div>
+
+    {% endif %} {% endif %} {% if not existing_booking %}
+    <!-- 📝 Booking Form -->
+    <form
+      method="post"
+      action="{% url 'private_booking' %}"
+      class="booking-form"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="room_id" value="{{ room.id }}" />
+
+      <label>Check-In:</label>
+      <input
+        type="datetime-local"
+        name="check_in"
+        required
+        onchange="updatePrice(parseFloat('{{ room.price }}'), 'daily')"
+      />
+
+      <label>Check-Out:</label>
+      <input
+        type="datetime-local"
+        name="check_out"
+        required
+        onchange="updatePrice(parseFloat('{{ room.price }}'), 'daily')"
+      />
+
+      <label>Guests:</label>
+      <input
+        type="number"
+        name="guest_count"
+        id="guestCount"
+        min="1"
+        value="1"
+        onchange="updatePrice(parseFloat('{{ room.price }}'), 'daily')"
+      />
+
+      <p id="priceDisplay">Total: Rs {{ room.price }}</p>
+
+      <label>Special Requests:</label>
+      <textarea name="special_requests" rows="3"></textarea>
+
+      <div class="cta-buttons">
+        <button type="submit" class="btn btn-primary">Book Now</button>
+        <button type="button" class="btn btn-outline">
+          <i class="fa fa-heart"></i> Add to Favourite
+        </button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- 💬 Reviews Sidebar -->
+  <aside class="room-reviews">
+    <h2>Reviews</h2>
+    {% for review in reviews %}
+    <div class="review">
+      <img src="{{ review.user.profile_pic.url }}" class="avatar" />
+      <div>
+        <strong>{{ review.user.username }}</strong>
+        <p>{{ review.text }}</p>
+      </div>
+    </div>
+    {% endfor %}
+    <a href="#" class="btn btn-link">See all</a>
+
+    {% if existing_booking and existing_booking.status == "checked_in" %}
+    <div class="review-form">
+      <h3>Leave a Review</h3>
+      <form method="post" action="{% url 'submit_review' %}">
+        {% csrf_token %}
+        <input type="hidden" name="room_id" value="{{ room.id }}" />
+        <textarea
+          name="text"
+          rows="3"
+          placeholder="Your review..."
+          required
+        ></textarea>
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="info-text">You can leave a review after check-in.</p>
+    {% endif %}
+  </aside>
+</section>
+
+<div id="extensionModal" class="modal-overlay" style="display: none">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeExtensionModal()">×</span>
+    <h3>Extend Your Stay</h3>
+    <form
+      method="post"
+      action="{% url 'extend_booking' %}"
+      oninput="calculateExtensionPrice()"
+    >
+      {% csrf_token %}
+      <input
+        type="hidden"
+        name="booking_id"
+        value="{{ existing_booking.id }}"
+      />
+      <label>New Check-Out:</label>
+      <input
+        type="datetime-local"
+        name="new_check_out"
+        id="newCheckOut"
+        required
+      />
+      <p id="extensionPriceDisplay">Total: Rs 0</p>
+      <button type="submit" class="btn btn-primary">Confirm Extension</button>
+    </form>
+  </div>
+</div>
+<div id="rebookModal" class="modal-overlay" style="display: none">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeRebookModal()">×</span>
+    <h3>Book This Room Again</h3>
+    <form
+      method="post"
+      action="{% url 'private_booking' %}"
+      oninput="calculateRebookPrice()"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="room_id" value="{{ room.id }}" />
+      <label>Check-In:</label>
+      <input
+        type="datetime-local"
+        name="check_in"
+        id="rebookCheckIn"
+        required
+      />
+      <label>Check-Out:</label>
+      <input
+        type="datetime-local"
+        name="check_out"
+        id="rebookCheckOut"
+        required
+      />
+      <label>Guests:</label>
+      <input
+        type="number"
+        name="guest_count"
+        id="rebookGuestCount"
+        min="1"
+        value="1"
+      />
+      <p id="rebookPriceDisplay">Total: Rs 0</p>
+      <button type="submit" class="btn btn-primary">Confirm Booking</button>
+    </form>
+  </div>
+</div>
+{% include "public/footer.html" %}
+
+<!-- 🧮 Price Calculator -->
+<script>
+  function updatePrice(pricePerUnit, unitType) {
+    const guestCount = parseInt(document.getElementById("guestCount").value);
+    const checkIn = new Date(document.querySelector("[name='check_in']").value);
+    const checkOut = new Date(
+      document.querySelector("[name='check_out']").value
+    );
+
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+      document.getElementById("priceDisplay").innerText =
+        "❌ Invalid date range";
+      return;
+    }
+
+    let duration = 1;
+    if (unitType === "daily") {
+      duration = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    } else if (unitType === "hourly") {
+      duration = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60));
+    }
+
+    const total = pricePerUnit * guestCount * duration;
+    document.getElementById("priceDisplay").innerText = `Total: Rs ${total}`;
+  }
+</script>
+
+<!-- 🖼️ Swiper Carousel -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<script>
+  new Swiper("#room-swiper", {
+    loop: true,
+    autoplay: { delay: 3000 },
+    slidesPerView: 1,
+    spaceBetween: 10,
+    pagination: { el: ".swiper-pagination", clickable: true },
+  });
+</script>
+<script>
+  function openExtensionModal() {
+    document.getElementById("extensionModal").style.display = "flex";
+  }
+  function closeExtensionModal() {
+    document.getElementById("extensionModal").style.display = "none";
+  }
+
+  function calculateExtensionPrice() {
+    const newCheckOut = new Date(document.getElementById("newCheckOut").value);
+    const currentCheckOut = new Date(
+      "{{ existing_booking.check_out|date:'Y-m-d\\TH:i' }}"
+    );
+    const pricePerUnit = parseFloat("{{ room.price }}");
+    const unitType = "daily"; // or "hourly" if needed
+
+    if (!newCheckOut || newCheckOut <= currentCheckOut) {
+      document.getElementById("extensionPriceDisplay").innerText =
+        "❌ Invalid extension";
+      return;
+    }
+
+    let duration = 1;
+    if (unitType === "daily") {
+      duration = Math.ceil(
+        (newCheckOut - currentCheckOut) / (1000 * 60 * 60 * 24)
+      );
+    } else {
+      duration = Math.ceil((newCheckOut - currentCheckOut) / (1000 * 60 * 60));
+    }
+
+    const total = pricePerUnit * duration;
+    document.getElementById(
+      "extensionPriceDisplay"
+    ).innerText = `Total: Rs ${total}`;
+  }
+</script>
+
+<script>
+  function openRebookModal() {
+    document.getElementById("rebookModal").style.display = "flex";
+  }
+  function closeRebookModal() {
+    document.getElementById("rebookModal").style.display = "none";
+  }
+
+  function calculateRebookPrice() {
+    const checkIn = new Date(document.getElementById("rebookCheckIn").value);
+    const checkOut = new Date(document.getElementById("rebookCheckOut").value);
+    const guestCount = parseInt(
+      document.getElementById("rebookGuestCount").value
+    );
+    const pricePerUnit = parseFloat("{{ room.price }}");
+    const unitType = "daily";
+
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+      document.getElementById("rebookPriceDisplay").innerText =
+        "❌ Invalid date range";
+      return;
+    }
+
+    let duration =
+      unitType === "daily"
+        ? Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
+        : Math.ceil((checkOut - checkIn) / (1000 * 60 * 60));
+
+    const total = pricePerUnit * guestCount * duration;
+    document.getElementById(
+      "rebookPriceDisplay"
+    ).innerText = `Total: Rs ${total}`;
+  }
+</script>
+<style>
+  .room-detail-container {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .room-main {
+    flex: 3;
+  }
+
+  .room-reviews {
+    flex: 1;
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  .room-meta h1 {
+    margin-bottom: 0.5rem;
+  }
+
+  .room-specs {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+  }
+
+  .room-specs li {
+    margin-bottom: 0.3rem;
+  }
+
+  .room-price {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+  }
+
+  .room-description {
+    margin: 1rem 0;
+  }
+
+  .booking-summary {
+    background: #e6ffe6;
+    border-left: 5px solid #28a745;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+  }
+
+  .btn-outline {
+    background: white;
+    border: 2px solid #007bff;
+    color: #007bff;
+  }
+
+  .btn-outline:hover {
+    background: #007bff;
+    color: white;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .review {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .review .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+</style>

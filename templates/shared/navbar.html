@@ -1,0 +1,256 @@
+{% load static %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+
+{% if messages %}
+<div id="toast-container">
+  {% for message in messages %}
+    <div class="toast {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+<nav class="navbar" id="main-navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <i class="fas fa-hotel"></i>
+      <span>Grand Hotel</span>
+    </div>
+    <div id="main-content" class="main-content">
+
+    <ul class="nav-menu">
+      <li><a href="{% url 'home' %}" class="nav-link">Home</a></li>
+      <li><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
+      {% if existing_booking and existing_booking.status == "checked_in" %}
+  <li><a href="{% url 'private_menu' %}" class="nav-link">Menu</a></li>
+{% else %}
+  <li><a href="{% url 'public_menu' %}" class="nav-link">Menu</a></li>
+{% endif %}
+      
+      {% if user.is_authenticated %}
+  <li><a href="{% url 'private_booking' %}" class="nav-link">Rooms</a></li>
+{% else %}
+  <li><a href="{% url 'public_booking' %}" class="nav-link">Book Now</a></li>
+{% endif %}
+
+
+      {% if not user.is_authenticated %}
+      <li>
+        <button class="login-btn" onclick="showAuthModal()">Login</button>
+      </li>
+      <li>
+        <button class="register-btn" onclick="showRegisterModal()">
+          Register
+        </button>
+      </li>
+      </div>
+      {% endif %} {% if user.is_authenticated %}
+      <li class="nav-profile">
+        <div class="profile-wrapper" onclick="openProfilePanel()">
+          <img
+            src="{% if user.userprofile.profile_image %}{{ user.userprofile.profile_image.url }}{% else %}/static/images/default-avatar.png{% endif %}"
+            alt="Profile"
+            class="profile-img"
+          />
+          <span class="profile-name">{{ user.username }}</span>
+        </div>
+      </li>
+      {% endif %}
+    </ul>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- Overlay -->
+<div id="overlay" class="overlay hidden" onclick="closeProfilePanel()"></div>
+
+<!-- Slide-in Profile Panel -->
+<div id="profile-panel" class="profile-panel hidden">
+  <div class="panel-header">
+    <h2>My Profile</h2>
+    <button onclick="closeProfilePanel()" class="close-panel-btn">×</button>
+  </div>
+
+  <div class="panel-content">
+    <div class="profile-info">
+      <img
+        src="{% if user.userprofile.profile_image %}{{ user.userprofile.profile_image.url }}{% else %}/static/images/default-avatar.png{% endif %}"
+        alt="Profile"
+        class="panel-avatar"
+      />
+      <p><strong>{{ user.username }}</strong></p>
+      <p>{{ user.email }}</p>
+    </div>
+
+    <ul class="panel-menu">
+      <li><a href="{% url 'edit_profile' %}">Edit Profile</a></li>
+      <li><a href="#">Payments & Appointments</a></li>
+      <li><a href="#">Notifications</a></li>
+      <li><a href="#">Security</a></li>
+      <li><a href="#">Help Center</a></li>
+      <li>
+  <form method="post" action="{% url 'logout' %}?next={% url 'home' %}">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn">Logout</button>
+  </form>
+</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Include login and register modals -->
+{% include "shared/login.html" %} {% include "shared/register.html" %}
+
+<script>
+  const hamburger = document.querySelector(".hamburger");
+  const navMenu = document.querySelector(".nav-menu");
+
+  hamburger.addEventListener("click", () => {
+    navMenu.classList.toggle("active");
+  });
+
+  function toggleProfilePopup() {
+    document.getElementById("profile-popup").classList.toggle("hidden");
+  }
+
+  function showAuthModal() {
+    document.getElementById("login-modal").classList.remove("hidden");
+  }
+
+  function showRegisterModal() {
+    document.getElementById("register-modal").classList.remove("hidden");
+  }
+</script>
+
+<script>
+  function showAuthModal() {
+    document.getElementById("login-modal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
+
+  function showRegisterModal() {
+    document.getElementById("register-modal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
+
+  function closeLoginModal() {
+    document.getElementById("login-modal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  }
+
+  function closeRegisterModal() {
+    document.getElementById("register-modal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  }
+
+  document
+    .getElementById("register-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      fetch("{% url 'register' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+        },
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            closeRegisterModal();
+            showAuthModal(); // open login modal
+          } else {
+            document.getElementById("register-message").innerText = data.error;
+          }
+        })
+        .catch((error) => {
+          console.error("Registration failed:", error);
+        });
+    });
+
+  // Close modals when clicking outside
+  window.addEventListener("click", function (event) {
+    const loginModal = document.getElementById("login-modal");
+    const registerModal = document.getElementById("register-modal");
+
+    if (event.target === loginModal) loginModal.classList.add("hidden");
+    if (event.target === registerModal) registerModal.classList.add("hidden");
+  });
+
+  // Close modals with Escape key
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeLoginModal();
+      closeRegisterModal();
+    }
+  });
+
+  function switchToRegister() {
+    closeLoginModal();
+    showRegisterModal();
+  }
+
+  function switchToLogin() {
+    closeRegisterModal();
+    showAuthModal();
+  }
+
+  function openProfilePanel() {
+    document.getElementById("profile-panel").classList.add("visible");
+    document.getElementById("overlay").classList.remove("hidden");
+  }
+
+  function closeProfilePanel() {
+    document.getElementById("profile-panel").classList.remove("visible");
+    document.getElementById("overlay").classList.add("hidden");
+  }
+
+  // Close with Escape key
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeProfilePanel();
+    }
+  });
+
+  function openProfilePanel() {
+  document.getElementById("profile-panel").classList.add("visible");
+  document.getElementById("overlay").classList.remove("hidden");
+  document.querySelector(".main-content").classList.add("shrink-left");
+  document.body.classList.add("panel-open");
+}
+
+function closeProfilePanel() {
+  document.getElementById("profile-panel").classList.remove("visible");
+  document.getElementById("overlay").classList.add("hidden");
+  document.querySelector(".main-content").classList.remove("shrink-left");
+  document.body.classList.remove("panel-open");
+}
+
+window.dispatchEvent(new Event('resize'));
+
+
+
+  setTimeout(() => {
+    document.querySelectorAll('.toast').forEach(el => el.remove());
+  }, 6000);
+
+</script>
